@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Behind nginx (reverse proxy) — honour X-Forwarded-Proto so the app
+        // detects HTTPS and generates https:// asset/redirect URLs. The app only
+        // receives traffic from the local proxy, so trusting all is safe here.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
