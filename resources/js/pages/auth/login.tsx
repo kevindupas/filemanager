@@ -31,6 +31,8 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('login'), {
+            // Play the boot sequence on the page we land on after sign-in.
+            onSuccess: () => sessionStorage.setItem('boot.pending', '1'),
             onFinish: () => reset('password'),
         });
     };
