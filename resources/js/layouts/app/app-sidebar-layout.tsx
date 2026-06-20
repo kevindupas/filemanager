@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { CommandPalette } from '@/components/command-palette';
+import { CyberExperience } from '@/components/cyber/cyber-experience';
 import { FlashToaster } from '@/components/flash-toaster';
 import { SystemStatusBar } from '@/components/system-status-bar';
 import { TransfersTray } from '@/components/transfers-tray';
@@ -43,6 +44,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: { child
             <CommandPalette />
             <FlashToaster />
             <TransfersTray />
+            <CyberExperience />
         </AppShell>
     );
 }
