@@ -41,8 +41,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // First admin account.
         $adminUser = User::firstOrCreate(
-            ['email' => 'admin@filemanager.test'],
-            ['name' => 'Admin', 'password' => Hash::make('password')],
+            ['email' => 'admin@admin.com'],
+            ['name' => 'Admin', 'password' => Hash::make('redacted-old-dev-password')],
         );
         $adminUser->assignRole('admin');
 
