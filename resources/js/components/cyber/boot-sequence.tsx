@@ -115,12 +115,10 @@ export function BootSequence() {
             <div className="pointer-events-none absolute inset-0 [background:radial-gradient(circle_at_center,transparent_55%,rgba(0,0,0,0.85))]" />
 
             <div className="relative w-full max-w-2xl px-8">
-                <pre className="cyber-glitch-text mb-6 text-lg font-bold leading-tight text-primary sm:text-2xl" data-text="RABBITHOLE//OS">
-                    {String.raw`  ___  ___   _   ___ ___ ___ ___
- | _ \/ _ \ | | | _ ) _ )_ _| __|
- |   / (_) || | | _ \ _ \| || _|
- |_|_\\___/ |_| |___/___/___|___|`}
-                </pre>
+                <div className="cyber-glitch-text mb-1 text-4xl font-black leading-none tracking-[0.18em] text-primary sm:text-6xl" data-text="RABBITHOLE">
+                    RABBITHOLE
+                </div>
+                <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.4em] text-[oklch(0.8_0.15_200)]">// OS  v2.0.77</p>
 
                 <div className="min-h-[15rem] space-y-0.5 text-xs sm:text-sm">
                     {shown.map((l, i) => (
