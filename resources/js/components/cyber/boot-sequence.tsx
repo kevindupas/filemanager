@@ -107,7 +107,7 @@ export function BootSequence() {
 
     return (
         <div
-            className={`fixed inset-0 z-[200] flex items-center justify-center bg-black font-mono ${closing ? 'cyber-boot-out' : 'cyber-boot-in'}`}
+            className={`fixed inset-0 z-[200] flex items-center justify-center bg-black font-mono ${closing ? 'cyber-boot-out' : ''}`}
             aria-hidden
         >
             {/* scanlines + vignette */}
