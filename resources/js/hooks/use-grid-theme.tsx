@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export const GRID_THEMES = ['tron', 'ares', 'clu', 'athena', 'aphrodite', 'poseidon'] as const;
+export const GRID_THEMES = ['tron', 'ares', 'clu', 'athena', 'aphrodite', 'poseidon', 'cyberpunk-2077'] as const;
 
 export type GridTheme = (typeof GRID_THEMES)[number];
 
@@ -11,6 +11,7 @@ export const GRID_THEME_LABELS: Record<GridTheme, string> = {
     athena: 'Athena',
     aphrodite: 'Aphrodite',
     poseidon: 'Poseidon',
+    'cyberpunk-2077': 'Cyberpunk 2077',
 };
 
 /** Approx primary hue per theme (for hue-tinted components like the avatar). */
@@ -21,6 +22,7 @@ export const GRID_THEME_HUE: Record<GridTheme, number> = {
     athena: 90,
     aphrodite: 340,
     poseidon: 250,
+    'cyberpunk-2077': 103,
 };
 
 /** CSS swatch colour per theme (for pickers). */
@@ -31,6 +33,7 @@ export const GRID_THEME_SWATCH: Record<GridTheme, string> = {
     athena: 'oklch(0.85 0.18 90)',
     aphrodite: 'oklch(0.7 0.22 340)',
     poseidon: 'oklch(0.6 0.2 250)',
+    'cyberpunk-2077': 'oklch(0.92 0.19 103)',
 };
 
 const STORAGE_KEY = 'grid-theme';

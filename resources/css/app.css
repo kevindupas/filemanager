@@ -267,6 +267,58 @@
     --sidebar-ring: oklch(0.6 0.2 250);
 }
 
+/* Cyberpunk 2077 — Militech yellow netrunner terminal. Full token set so the
+   look is self-contained; the experience layer (boot/glitch/sound) is gated on
+   this data-theme in React. */
+[data-theme='cyberpunk-2077'] {
+    --radius: 0.125rem; /* sharp, terminal-ish corners */
+
+    --background: oklch(0.07 0.02 100);
+    --foreground: oklch(0.95 0.04 105);
+
+    --primary: oklch(0.92 0.19 103); /* Militech yellow #FCEE0A */
+    --primary-foreground: oklch(0.1 0.02 100);
+
+    --card: oklch(0.1 0.02 100);
+    --card-foreground: oklch(0.93 0.03 105);
+    --popover: oklch(0.1 0.02 100);
+    --popover-foreground: oklch(0.93 0.03 105);
+
+    --secondary: oklch(0.18 0.04 100);
+    --secondary-foreground: oklch(0.95 0 0);
+
+    --muted: oklch(0.15 0.02 100);
+    --muted-foreground: oklch(0.72 0.04 103);
+
+    --accent: oklch(0.8 0.15 200); /* electric cyan */
+    --accent-foreground: oklch(0.1 0 0);
+
+    --destructive: oklch(0.62 0.27 18); /* glitch red */
+    --destructive-foreground: oklch(0.98 0 0);
+
+    --border: oklch(0.34 0.11 103);
+    --input: oklch(0.22 0.06 103);
+    --ring: oklch(0.92 0.19 103);
+
+    --glow: oklch(0.92 0.19 103);
+    --glow-muted: oklch(0.6 0.14 103);
+
+    --chart-1: oklch(0.92 0.19 103);
+    --chart-2: oklch(0.8 0.15 200);
+    --chart-3: oklch(0.62 0.27 18);
+    --chart-4: oklch(0.7 0.18 90);
+    --chart-5: oklch(0.85 0.12 110);
+
+    --sidebar: oklch(0.08 0.02 100);
+    --sidebar-foreground: oklch(0.93 0.03 105);
+    --sidebar-primary: oklch(0.92 0.19 103);
+    --sidebar-primary-foreground: oklch(0.1 0.02 100);
+    --sidebar-accent: oklch(0.18 0.04 100);
+    --sidebar-accent-foreground: oklch(0.95 0 0);
+    --sidebar-border: oklch(0.34 0.11 103);
+    --sidebar-ring: oklch(0.92 0.19 103);
+}
+
 @layer base {
     * {
         @apply border-border;
