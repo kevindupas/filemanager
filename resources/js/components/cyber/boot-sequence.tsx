@@ -1,9 +1,10 @@
-import { useCyberActive } from '@/hooks/use-cyber';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const SESSION_KEY = 'cyber.booted';
+// Set by the login page; makes the boot sequence play once right after sign-in
+// (in every theme — the bar/text use the active theme's --primary/--glow).
+const PENDING_KEY = 'boot.pending';
 
 type Line = { text: string; tone?: 'dim' | 'cyan' | 'ok' | 'warn' };
 
@@ -32,7 +33,6 @@ const TONE_CLASS: Record<NonNullable<Line['tone']>, string> = {
 };
 
 export function BootSequence() {
-    const active = useCyberActive();
     const { auth } = usePage<SharedData>().props;
     const name = auth?.user?.name ?? 'OPERATOR';
 
@@ -56,18 +56,19 @@ export function BootSequence() {
         setProgress(0);
         setClosing(false);
         setRunning(true);
-        sessionStorage.setItem(SESSION_KEY, '1');
-        window.dispatchEvent(new Event('cyber-boot-start')); // sound hook (step 5)
+        window.dispatchEvent(new Event('cyber-boot-start')); // sound hook
     }, [name]);
 
-    // Trigger: once per session when the theme is active, plus on REBOOT.
+    // Trigger: right after login (pending flag), plus on REBOOT. Theme-agnostic.
     useEffect(() => {
-        if (!active) return;
-        if (!sessionStorage.getItem(SESSION_KEY)) start();
+        if (sessionStorage.getItem(PENDING_KEY) === '1') {
+            sessionStorage.removeItem(PENDING_KEY);
+            start();
+        }
         const onReboot = () => start();
         window.addEventListener('cyber-reboot', onReboot);
         return () => window.removeEventListener('cyber-reboot', onReboot);
-    }, [active, start]);
+    }, [start]);
 
     // Reveal lines + fill the progress bar while running.
     useEffect(() => {
@@ -96,7 +97,7 @@ export function BootSequence() {
         };
     }, [running, finish]);
 
-    if (!active || !running) return null;
+    if (!running) return null;
 
     const shown = lines.current.slice(0, step);
 
