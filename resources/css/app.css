@@ -378,3 +378,81 @@
         opacity: 0.35;
     }
 }
+
+/* ============================================================
+   Cyberpunk 2077 experience layer — boot sequence + glitch FX.
+   Only used while data-theme="cyberpunk-2077" is active.
+   ============================================================ */
+
+@keyframes cyber-boot-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes cyber-boot-out {
+    0% { opacity: 1; transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+    20% { transform: translate(-4px, 2px); clip-path: inset(20% 0 30% 0); }
+    40% { transform: translate(5px, -2px); clip-path: inset(60% 0 10% 0); }
+    60% { opacity: 0.8; transform: translate(-3px, 0); clip-path: inset(10% 0 70% 0); }
+    100% { opacity: 0; transform: translate(0, 0); clip-path: inset(50% 0 50% 0); }
+}
+.cyber-boot-in { animation: cyber-boot-in 0.25s ease-out both; }
+.cyber-boot-out { animation: cyber-boot-out 0.45s steps(2, end) both; }
+
+@keyframes cyber-caret {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+.cyber-caret { animation: cyber-caret 0.8s step-end infinite; }
+
+@keyframes cyber-glitch {
+    0%, 92%, 100% { transform: translate(0); text-shadow: 0 0 8px color-mix(in oklch, var(--glow) 60%, transparent); }
+    93% { transform: translate(-2px, 1px); text-shadow: 2px 0 oklch(0.62 0.27 18), -2px 0 oklch(0.8 0.15 200); }
+    95% { transform: translate(2px, -1px); text-shadow: -2px 0 oklch(0.62 0.27 18), 2px 0 oklch(0.8 0.15 200); }
+    97% { transform: translate(-1px, 0); text-shadow: 2px 0 oklch(0.8 0.15 200), -2px 0 oklch(0.62 0.27 18); }
+}
+.cyber-glitch-text { animation: cyber-glitch 3.5s infinite; }
+
+/* Page-transition glitch overlay (RGB split + scan tear + yellow flash). */
+@keyframes cyber-transition {
+    0% { opacity: 0; }
+    8% { opacity: 1; }
+    100% { opacity: 0; }
+}
+@keyframes cyber-tear {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    50% { transform: translateX(7px); }
+    75% { transform: translateX(-4px); }
+    100% { transform: translateX(0); }
+}
+.cyber-transition { animation: cyber-transition 0.25s ease-out forwards; }
+.cyber-transition-tear { animation: cyber-tear 0.25s steps(3, end); }
+
+/* Yellow ambient scanlines + flicker over the whole app (2077 only). */
+@keyframes cyber-flicker {
+    0%, 96%, 100% { opacity: 0.06; }
+    97% { opacity: 0.14; }
+    98% { opacity: 0.03; }
+    99% { opacity: 0.12; }
+}
+.cyber-ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--primary) 7%, transparent) 0px,
+        color-mix(in oklch, var(--primary) 7%, transparent) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    animation: cyber-flicker 6s infinite;
+}
+
+/* Decode/scramble reveal for headings. */
+@keyframes cyber-decode-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.cyber-decode { animation: cyber-decode-in 0.2s ease-out both; }

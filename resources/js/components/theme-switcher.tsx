@@ -20,6 +20,7 @@ const SWATCH: Record<GridTheme, string> = {
     athena: 'oklch(0.85 0.18 90)',
     aphrodite: 'oklch(0.7 0.22 340)',
     poseidon: 'oklch(0.6 0.2 250)',
+    'cyberpunk-2077': 'oklch(0.92 0.19 103)',
 };
 
 export function ThemeSwitcher() {
