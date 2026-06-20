@@ -30,9 +30,11 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        // Arm the boot sequence BEFORE the request so the destination page mounts
+        // with the flag already set (no dashboard flash). Disarm if login fails.
+        sessionStorage.setItem('boot.pending', '1');
         post(route('login'), {
-            // Play the boot sequence on the page we land on after sign-in.
-            onSuccess: () => sessionStorage.setItem('boot.pending', '1'),
+            onError: () => sessionStorage.removeItem('boot.pending'),
             onFinish: () => reset('password'),
         });
     };
