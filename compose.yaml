@@ -1,0 +1,62 @@
+# Cyberpunk file manager — production stack.
+# Multi-arch: builds natively on the Pi 5 (arm64) and on Proxmox (amd64).
+#   cp .env.docker.example .env   # then edit secrets
+#   docker compose up -d --build
+#   docker compose exec app php artisan key:generate   # first run only
+
+services:
+  app:
+    build: .
+    image: filemanager:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RUN_MIGRATIONS: "true" # only this service runs migrate/seed
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - storage:/app/storage/app # persist user files (private/chunks/trash/thumbs)
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    image: filemanager:latest
+    restart: unless-stopped
+    env_file: .env
+    command: ["php", "artisan", "queue:work", "redis", "--tries=1", "--timeout=3600", "--sleep=1", "--max-time=3600"]
+    volumes:
+      - storage:/app/storage/app # same files, so cross-disk transfers reach them
+    depends_on:
+      - app
+      - redis
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-filemanager}
+      POSTGRES_USER: ${DB_USERNAME:-filemanager}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-filemanager}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+
+volumes:
+  storage:
+  pgdata:
+  redisdata:
