@@ -36,7 +36,9 @@ export function BootSequence() {
     const { auth } = usePage<SharedData>().props;
     const name = auth?.user?.name ?? 'OPERATOR';
 
-    const [running, setRunning] = useState(false);
+    // Initialise synchronously from the pending flag so the overlay is painted in
+    // the SAME frame as the page — the dashboard never flashes underneath first.
+    const [running, setRunning] = useState(() => typeof window !== 'undefined' && sessionStorage.getItem(PENDING_KEY) === '1');
     const [closing, setClosing] = useState(false);
     const [step, setStep] = useState(0);
     const [progress, setProgress] = useState(0);
@@ -59,16 +61,18 @@ export function BootSequence() {
         window.dispatchEvent(new Event('cyber-boot-start')); // sound hook
     }, [name]);
 
-    // Trigger: right after login (pending flag), plus on REBOOT. Theme-agnostic.
+    // Already running from the login flag → clear it + kick the boot sound once.
+    // Also replay on REBOOT. Theme-agnostic.
     useEffect(() => {
-        if (sessionStorage.getItem(PENDING_KEY) === '1') {
+        if (running) {
             sessionStorage.removeItem(PENDING_KEY);
-            start();
+            window.dispatchEvent(new Event('cyber-boot-start'));
         }
         const onReboot = () => start();
         window.addEventListener('cyber-reboot', onReboot);
         return () => window.removeEventListener('cyber-reboot', onReboot);
-    }, [start]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Reveal lines + fill the progress bar while running.
     useEffect(() => {
