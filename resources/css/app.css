@@ -1,0 +1,328 @@
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    /* Terminal / HUD aesthetic: monospace everywhere. */
+    --font-sans:
+        'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+    --font-mono:
+        'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-glow: var(--glow);
+    --color-glow-muted: var(--glow-muted);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--border, currentColor);
+    }
+}
+
+/*
+ * Themes from thegridcn (https://thegridcn.com) — OKLCH token sets.
+ * Tron is the full base; the other five only override accent hues and
+ * inherit the shared dark background. Switch at runtime via the
+ * `data-theme` attribute on <html> (see use-grid-theme.tsx).
+ */
+:root,
+[data-theme='tron'] {
+    --radius: 0.5rem;
+
+    --background: oklch(0.06 0.02 250);
+    --foreground: oklch(0.95 0.02 220);
+
+    --primary: oklch(0.75 0.18 195);
+    --primary-foreground: oklch(0.1 0 0);
+
+    --card: oklch(0.1 0.02 250);
+    --card-foreground: oklch(0.92 0.02 220);
+    --popover: oklch(0.1 0.02 250);
+    --popover-foreground: oklch(0.92 0.02 220);
+
+    --secondary: oklch(0.18 0.05 200);
+    --secondary-foreground: oklch(0.95 0 0);
+
+    --muted: oklch(0.15 0.03 200);
+    --muted-foreground: oklch(0.65 0 0);
+
+    --accent: oklch(0.7 0.15 195);
+    --accent-foreground: oklch(0.1 0 0);
+
+    --destructive: oklch(0.55 0.25 30);
+    --destructive-foreground: oklch(0.98 0 0);
+
+    --border: oklch(0.3 0.1 195);
+    --input: oklch(0.2 0.06 195);
+    --ring: oklch(0.75 0.18 195);
+
+    --glow: oklch(0.75 0.18 195);
+    --glow-muted: oklch(0.5 0.12 195);
+
+    --chart-1: oklch(0.75 0.18 195);
+    --chart-2: oklch(0.65 0.15 210);
+    --chart-3: oklch(0.7 0.12 180);
+    --chart-4: oklch(0.6 0.18 200);
+    --chart-5: oklch(0.8 0.1 190);
+
+    --sidebar: oklch(0.08 0.02 250);
+    --sidebar-foreground: oklch(0.92 0.02 220);
+    --sidebar-primary: oklch(0.75 0.18 195);
+    --sidebar-primary-foreground: oklch(0.1 0 0);
+    --sidebar-accent: oklch(0.18 0.05 200);
+    --sidebar-accent-foreground: oklch(0.95 0 0);
+    --sidebar-border: oklch(0.3 0.1 195);
+    --sidebar-ring: oklch(0.75 0.18 195);
+}
+
+[data-theme='ares'] {
+    /* Pure-red Ares: secondary/accent realigned to the red hue (~25) so no
+       stray orange (thegridcn's stock Ares mixes in an amber accent). */
+    --background: oklch(0.07 0.02 25);
+    --foreground: oklch(0.95 0.02 20);
+    --primary: oklch(0.6 0.25 25);
+    --primary-foreground: oklch(0.98 0 0);
+    --card: oklch(0.11 0.03 25);
+    --card-foreground: oklch(0.92 0.02 20);
+    --popover: oklch(0.11 0.03 25);
+    --popover-foreground: oklch(0.92 0.02 20);
+    --secondary: oklch(0.2 0.07 25);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.16 0.04 25);
+    --muted-foreground: oklch(0.65 0.03 25);
+    --accent: oklch(0.62 0.22 28);
+    --accent-foreground: oklch(0.98 0 0);
+    --border: oklch(0.3 0.12 25);
+    --input: oklch(0.2 0.06 25);
+    --ring: oklch(0.6 0.25 25);
+    --glow: oklch(0.6 0.25 25);
+    --glow-muted: oklch(0.4 0.15 25);
+    --chart-1: oklch(0.6 0.25 25);
+    --chart-2: oklch(0.55 0.22 18);
+    --chart-3: oklch(0.5 0.22 30);
+    --chart-4: oklch(0.65 0.2 22);
+    --chart-5: oklch(0.7 0.18 28);
+    --sidebar: oklch(0.09 0.02 25);
+    --sidebar-foreground: oklch(0.92 0.02 20);
+    --sidebar-primary: oklch(0.6 0.25 25);
+    --sidebar-primary-foreground: oklch(0.98 0 0);
+    --sidebar-accent: oklch(0.2 0.07 25);
+    --sidebar-accent-foreground: oklch(0.95 0 0);
+    --sidebar-border: oklch(0.3 0.12 25);
+    --sidebar-ring: oklch(0.6 0.25 25);
+}
+
+[data-theme='clu'] {
+    --primary: oklch(0.75 0.2 55);
+    --primary-foreground: oklch(0.1 0 0);
+    --secondary: oklch(0.18 0.06 50);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.15 0.04 50);
+    --muted-foreground: oklch(0.65 0 0);
+    --accent: oklch(0.7 0.18 55);
+    --accent-foreground: oklch(0.1 0 0);
+    --border: oklch(0.3 0.1 55);
+    --input: oklch(0.2 0.06 55);
+    --ring: oklch(0.75 0.2 55);
+    --glow: oklch(0.75 0.2 55);
+    --glow-muted: oklch(0.5 0.12 55);
+    --chart-1: oklch(0.75 0.2 55);
+    --chart-2: oklch(0.7 0.18 45);
+    --chart-3: oklch(0.65 0.15 65);
+    --chart-4: oklch(0.8 0.15 50);
+    --chart-5: oklch(0.6 0.2 60);
+    --sidebar-primary: oklch(0.75 0.2 55);
+    --sidebar-accent: oklch(0.18 0.06 50);
+    --sidebar-border: oklch(0.3 0.1 55);
+    --sidebar-ring: oklch(0.75 0.2 55);
+}
+
+[data-theme='athena'] {
+    --primary: oklch(0.85 0.18 90);
+    --primary-foreground: oklch(0.1 0 0);
+    --secondary: oklch(0.18 0.05 85);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.15 0.03 85);
+    --muted-foreground: oklch(0.65 0 0);
+    --accent: oklch(0.8 0.15 90);
+    --accent-foreground: oklch(0.1 0 0);
+    --border: oklch(0.35 0.1 90);
+    --input: oklch(0.2 0.06 90);
+    --ring: oklch(0.85 0.18 90);
+    --glow: oklch(0.85 0.18 90);
+    --glow-muted: oklch(0.55 0.12 90);
+    --chart-1: oklch(0.85 0.18 90);
+    --chart-2: oklch(0.8 0.15 100);
+    --chart-3: oklch(0.75 0.12 80);
+    --chart-4: oklch(0.7 0.18 95);
+    --chart-5: oklch(0.9 0.1 85);
+    --sidebar-primary: oklch(0.85 0.18 90);
+    --sidebar-accent: oklch(0.18 0.05 85);
+    --sidebar-border: oklch(0.35 0.1 90);
+    --sidebar-ring: oklch(0.85 0.18 90);
+}
+
+[data-theme='aphrodite'] {
+    --primary: oklch(0.7 0.22 340);
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.18 0.06 340);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.15 0.04 340);
+    --muted-foreground: oklch(0.65 0 0);
+    --accent: oklch(0.65 0.2 340);
+    --accent-foreground: oklch(0.98 0 0);
+    --border: oklch(0.3 0.1 340);
+    --input: oklch(0.2 0.06 340);
+    --ring: oklch(0.7 0.22 340);
+    --glow: oklch(0.7 0.22 340);
+    --glow-muted: oklch(0.5 0.15 340);
+    --chart-1: oklch(0.7 0.22 340);
+    --chart-2: oklch(0.65 0.2 350);
+    --chart-3: oklch(0.75 0.18 330);
+    --chart-4: oklch(0.6 0.22 345);
+    --chart-5: oklch(0.8 0.15 335);
+    --sidebar-primary: oklch(0.7 0.22 340);
+    --sidebar-accent: oklch(0.18 0.06 340);
+    --sidebar-border: oklch(0.3 0.1 340);
+    --sidebar-ring: oklch(0.7 0.22 340);
+}
+
+[data-theme='poseidon'] {
+    --primary: oklch(0.6 0.2 250);
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.18 0.06 250);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.15 0.04 250);
+    --muted-foreground: oklch(0.65 0 0);
+    --accent: oklch(0.55 0.18 250);
+    --accent-foreground: oklch(0.98 0 0);
+    --border: oklch(0.28 0.1 250);
+    --input: oklch(0.2 0.06 250);
+    --ring: oklch(0.6 0.2 250);
+    --glow: oklch(0.6 0.2 250);
+    --glow-muted: oklch(0.4 0.12 250);
+    --chart-1: oklch(0.6 0.2 250);
+    --chart-2: oklch(0.55 0.18 260);
+    --chart-3: oklch(0.65 0.15 240);
+    --chart-4: oklch(0.5 0.2 255);
+    --chart-5: oklch(0.7 0.12 245);
+    --sidebar-primary: oklch(0.6 0.2 250);
+    --sidebar-accent: oklch(0.18 0.06 250);
+    --sidebar-border: oklch(0.28 0.1 250);
+    --sidebar-ring: oklch(0.6 0.2 250);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    html {
+        color-scheme: dark;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        background-image:
+            radial-gradient(circle at 50% 0%, color-mix(in oklch, var(--glow) 8%, transparent), transparent 70%);
+        background-attachment: fixed;
+    }
+}
+
+@layer utilities {
+    /* Neon text glow tied to the active theme accent. */
+    .glow-text {
+        text-shadow: 0 0 8px color-mix(in oklch, var(--glow) 60%, transparent);
+    }
+
+    /* Box / border glow for panels and hovered rows. */
+    .glow-border {
+        box-shadow:
+            0 0 0 1px color-mix(in oklch, var(--glow) 30%, transparent),
+            0 0 12px color-mix(in oklch, var(--glow) 18%, transparent);
+    }
+
+    /* Animation for thegridcn circuit-background. */
+    @keyframes circuit {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+    .animate-circuit {
+        animation: circuit 4s ease-in-out infinite;
+    }
+
+    /* Subtle CRT scanline overlay — decorative, low opacity. */
+    .scanlines {
+        position: relative;
+    }
+    .scanlines::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+            to bottom,
+            color-mix(in oklch, var(--glow) 4%, transparent) 0px,
+            color-mix(in oklch, var(--glow) 4%, transparent) 1px,
+            transparent 1px,
+            transparent 3px
+        );
+        opacity: 0.35;
+    }
+}
