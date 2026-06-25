@@ -7,6 +7,7 @@ use App\Http\Controllers\TransferController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PublicShareController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\TrashController;
@@ -67,6 +68,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('files/rename', [FileController::class, 'rename'])->name('files.rename');
     Route::post('files/save', [FileController::class, 'save'])
         ->middleware('permission:upload-files')->name('files.save');
+
+    // Encrypted notes — per user, body encrypted at rest.
+    Route::get('notes', [NoteController::class, 'index'])->name('notes.index');
+    Route::post('notes', [NoteController::class, 'store'])->name('notes.store');
+    Route::patch('notes/{note}', [NoteController::class, 'update'])->name('notes.update');
+    Route::delete('notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
 
     // Favorites — open to any authenticated user.
     Route::get('favorites', [FavoriteController::class, 'index'])->name('favorites.index');
