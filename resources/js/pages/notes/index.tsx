@@ -5,7 +5,26 @@ import { getXsrfToken } from '@/lib/csrf';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Eye, Lock, Pencil, Pin, Plus, Search, Trash2 } from 'lucide-react';
+import {
+    Bold,
+    Code,
+    Eye,
+    Heading1,
+    Heading2,
+    Italic,
+    Link2,
+    List,
+    ListChecks,
+    ListOrdered,
+    Lock,
+    Pencil,
+    Pin,
+    Plus,
+    Quote,
+    Search,
+    Table,
+    Trash2,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -36,6 +55,7 @@ export default function Notes({ notes: initial }: { notes: Note[] }) {
     const [mode, setMode] = useState<'edit' | 'preview'>('edit');
     const [saving, setSaving] = useState(false);
     const saveTimer = useRef<number | undefined>(undefined);
+    const taRef = useRef<HTMLTextAreaElement>(null);
 
     const selected = notes.find((n) => n.id === selectedId) ?? null;
 
@@ -76,6 +96,52 @@ export default function Notes({ notes: initial }: { notes: Note[] }) {
         const now = new Date().toISOString();
         setNotes((prev) => prev.map((n) => (n.id === selected.id ? { ...n, body, updated_at: now } : n)));
         persist(selected.id, { body });
+    };
+
+    // Toolbar: insert/wrap markdown at the cursor in the editor textarea.
+    const applyFormat = (kind: string) => {
+        const ta = taRef.current;
+        if (!ta || !selected) return;
+        const value = selected.body;
+        const s = ta.selectionStart;
+        const e = ta.selectionEnd;
+        const sel = value.slice(s, e);
+
+        const wrap = (before: string, after = before) => ({
+            next: value.slice(0, s) + before + sel + after + value.slice(e),
+            sel: [s + before.length, s + before.length + sel.length] as [number, number],
+        });
+        const linePrefix = (prefix: string) => {
+            const lineStart = value.lastIndexOf('\n', s - 1) + 1;
+            const block = value.slice(lineStart, e);
+            const prefixed = block.split('\n').map((l) => prefix + l).join('\n');
+            const next = value.slice(0, lineStart) + prefixed + value.slice(e);
+            return { next, pos: e + (prefixed.length - block.length) };
+        };
+        const insertAt = (text: string) => ({ next: value.slice(0, s) + text + value.slice(e), pos: s + text.length });
+
+        let r: { next: string; pos?: number; sel?: [number, number] };
+        switch (kind) {
+            case 'h1': r = linePrefix('# '); break;
+            case 'h2': r = linePrefix('## '); break;
+            case 'bold': r = wrap('**'); break;
+            case 'italic': r = wrap('*'); break;
+            case 'ul': r = linePrefix('- '); break;
+            case 'ol': r = linePrefix('1. '); break;
+            case 'check': r = linePrefix('- [ ] '); break;
+            case 'quote': r = linePrefix('> '); break;
+            case 'code': r = sel.includes('\n') ? wrap('```\n', '\n```') : wrap('`'); break;
+            case 'link': r = wrap('[', '](https://)'); break;
+            case 'table': r = insertAt('\n| Col 1 | Col 2 |\n| --- | --- |\n|  |  |\n'); break;
+            default: return;
+        }
+
+        editBody(r.next);
+        requestAnimationFrame(() => {
+            ta.focus();
+            if (r.sel) ta.setSelectionRange(r.sel[0], r.sel[1]);
+            else if (r.pos !== undefined) ta.setSelectionRange(r.pos, r.pos);
+        });
     };
 
     const togglePin = (n: Note) => {
@@ -178,8 +244,39 @@ export default function Notes({ notes: initial }: { notes: Note[] }) {
                                     </Button>
                                 </div>
 
+                                {mode === 'edit' && (
+                                    <div className="flex shrink-0 flex-wrap items-center gap-0.5 border-b border-primary/10 px-2 py-1">
+                                        {(
+                                            [
+                                                ['h1', Heading1, 'Title'],
+                                                ['h2', Heading2, 'Subtitle'],
+                                                ['bold', Bold, 'Bold'],
+                                                ['italic', Italic, 'Italic'],
+                                                ['ul', List, 'Bullet list'],
+                                                ['ol', ListOrdered, 'Numbered list'],
+                                                ['check', ListChecks, 'Checklist'],
+                                                ['quote', Quote, 'Quote'],
+                                                ['code', Code, 'Code'],
+                                                ['table', Table, 'Table'],
+                                                ['link', Link2, 'Link'],
+                                            ] as const
+                                        ).map(([k, Icon, label]) => (
+                                            <button
+                                                key={k}
+                                                type="button"
+                                                title={label}
+                                                onClick={() => applyFormat(k)}
+                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                            >
+                                                <Icon className="size-4" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
                                 {mode === 'edit' ? (
                                     <textarea
+                                        ref={taRef}
                                         value={selected.body}
                                         onChange={(e) => editBody(e.target.value)}
                                         autoFocus
