@@ -132,7 +132,7 @@ export default function Notes({ notes: initial }: { notes: Note[] }) {
             case 'quote': r = linePrefix('> '); break;
             case 'code': r = sel.includes('\n') ? wrap('```\n', '\n```') : wrap('`'); break;
             case 'link': r = wrap('[', '](https://)'); break;
-            case 'table': r = insertAt('\n| Col 1 | Col 2 |\n| --- | --- |\n|  |  |\n'); break;
+            case 'table': r = insertAt('\n\n| Col 1 | Col 2 |\n| --- | --- |\n|  |  |\n\n'); break;
             default: return;
         }
 
