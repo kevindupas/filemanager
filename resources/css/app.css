@@ -457,6 +457,24 @@
 }
 .cyber-decode { animation: cyber-decode-in 0.2s ease-out both; }
 
+/* Rendered markdown (notes preview). */
+.markdown-body h1 { font-size: 1.4em; font-weight: 700; margin: 0.6em 0 0.3em; color: var(--primary); }
+.markdown-body h2 { font-size: 1.2em; font-weight: 700; margin: 0.6em 0 0.3em; }
+.markdown-body h3 { font-size: 1.05em; font-weight: 600; margin: 0.5em 0 0.2em; }
+.markdown-body p { margin: 0.4em 0; line-height: 1.6; }
+.markdown-body ul { list-style: disc; padding-left: 1.4em; margin: 0.4em 0; }
+.markdown-body ol { list-style: decimal; padding-left: 1.4em; margin: 0.4em 0; }
+.markdown-body li { margin: 0.15em 0; }
+.markdown-body a { color: var(--primary); text-decoration: underline; }
+.markdown-body code { font-family: ui-monospace, monospace; font-size: 0.9em; background: color-mix(in oklch, var(--primary) 12%, transparent); padding: 0.1em 0.3em; border-radius: 3px; }
+.markdown-body pre { background: var(--muted); padding: 0.8em; border-radius: 4px; overflow-x: auto; margin: 0.5em 0; }
+.markdown-body pre code { background: transparent; padding: 0; }
+.markdown-body blockquote { border-left: 2px solid var(--primary); padding-left: 0.8em; margin: 0.5em 0; color: var(--muted-foreground); }
+.markdown-body hr { border: 0; border-top: 1px solid var(--border); margin: 1em 0; }
+.markdown-body table { border-collapse: collapse; margin: 0.5em 0; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 0.3em 0.6em; }
+.markdown-body input[type='checkbox'] { margin-right: 0.4em; accent-color: var(--primary); }
+
 /* Subtle hover jitter on key elements (theme-scoped, pure CSS, no per-component edits). */
 @keyframes cyber-hover-jit {
     0%, 100% { transform: translate(0, 0); }

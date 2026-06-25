@@ -50,6 +50,8 @@
         "mobile-drag-drop": "^3.0.0-rc.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
+        "react-markdown": "^10.1.0",
+        "remark-gfm": "^4.0.1",
         "resumablejs": "^1.1.0",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.0.1",

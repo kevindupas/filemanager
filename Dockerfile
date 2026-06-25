@@ -26,8 +26,9 @@ WORKDIR /app
 RUN install-php-extensions \
     pdo_pgsql pgsql redis gd exif ftp intl zip pcntl bcmath opcache
 
-# Production opcache + JIT tuning.
+# Production opcache + JIT tuning + upload limits (> 5 MB chunk size).
 COPY docker/opcache.ini /usr/local/etc/php/conf.d/zz-opcache.ini
+COPY docker/uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
 
 # App code + vendored deps + built assets.
 COPY . .
