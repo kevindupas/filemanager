@@ -121,7 +121,7 @@ export function CommandMenu({
         className={cn(
           "fixed left-1/2 top-[20%] z-50 w-full max-w-md -translate-x-1/2 overflow-hidden",
           isClassic
-            ? "rounded-xl border border-border bg-popover text-popover-foreground shadow-lg"
+            ? "rounded border border-primary/30 bg-popover text-popover-foreground shadow-lg"
             : "rounded border border-primary/40 bg-card/95 shadow-[0_0_40px_rgba(var(--primary-rgb,0,180,255),0.08)] backdrop-blur-md",
           className
         )}

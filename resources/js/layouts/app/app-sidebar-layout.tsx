@@ -29,7 +29,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: { child
                     internally instead of growing the page. */}
                 <div className={cn(
                     'relative flex h-[calc(100svh-1rem)] flex-col overflow-hidden rounded border',
-                    isClassic ? 'border-border' : 'border-primary/25',
+                    isClassic ? 'border-primary/30' : 'border-primary/25',
                 )}>
                     {/* background layers (self-gate to null under classic) */}
                     {enabled && <CircuitBackground className="absolute inset-0" opacity={0.18} />}

@@ -63,7 +63,7 @@ export function DataCard({
       className={cn(
         "relative overflow-hidden",
         isClassic
-          ? cn("rounded-xl border bg-card shadow-sm", status === "alert" ? "border-destructive/50" : "border-border")
+          ? cn("rounded border bg-card", status === "alert" ? "border-destructive/50" : "border-primary/30")
           : cn("rounded border bg-card/80 backdrop-blur-sm", statusColors[status]),
         className
       )}

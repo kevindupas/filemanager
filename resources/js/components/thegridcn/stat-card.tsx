@@ -83,7 +83,7 @@ export function StatCard({
       className={cn(
         "relative overflow-hidden p-4",
         isClassic
-          ? "rounded-xl border border-border bg-card shadow-sm"
+          ? "rounded border border-primary/30 bg-card"
           : "rounded border border-primary/30 bg-card/80 backdrop-blur-sm",
         className
       )}
