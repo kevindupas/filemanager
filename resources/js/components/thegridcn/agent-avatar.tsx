@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 export type AgentAvatarProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -73,6 +74,7 @@ export function AgentAvatar({
   className,
   ...props
 }: AgentAvatarProps) {
+  const { isClassic } = useThemeMode()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
 
@@ -233,6 +235,24 @@ export function AgentAvatar({
   }, [seed, size, animated, hue, hash, baseHue])
 
   const ringSize = size + 8
+
+  // Classic: a plain initials avatar, no canvas/glow.
+  if (isClassic) {
+    const initials = (seed.match(/[a-zA-Z0-9]/g)?.slice(0, 2).join("") || "?").toUpperCase()
+    return (
+      <div
+        data-slot="agent-avatar-classic"
+        className={cn(
+          "inline-flex items-center justify-center rounded-full bg-muted font-medium text-muted-foreground",
+          className
+        )}
+        style={{ width: size, height: size, fontSize: size * 0.4 }}
+        {...props}
+      >
+        {initials}
+      </div>
+    )
+  }
 
   return (
     <div

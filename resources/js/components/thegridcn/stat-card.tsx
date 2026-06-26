@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string
@@ -40,6 +41,7 @@ export function StatCard({
   className,
   ...props
 }: StatCardProps) {
+  const { isClassic } = useThemeMode()
   // Animate counter
   const numericValue = typeof value === "number" ? value : null
   const [displayValue, setDisplayValue] = React.useState(numericValue ? 0 : null)
@@ -79,29 +81,34 @@ export function StatCard({
     <div
       data-slot="tron-stat-card"
       className={cn(
-        "relative overflow-hidden rounded border border-primary/30 bg-card/80 p-4 backdrop-blur-sm",
+        "relative overflow-hidden p-4",
+        isClassic
+          ? "rounded-xl border border-border bg-card shadow-sm"
+          : "rounded border border-primary/30 bg-card/80 backdrop-blur-sm",
         className
       )}
       {...props}
     >
-      {/* Scanline overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+      {/* Scanline overlay (cyber only) */}
+      {!isClassic && (
+        <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+      )}
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-widest text-foreground/60">
+          <div className={cn("text-xs text-muted-foreground", !isClassic && "text-[10px] uppercase tracking-widest text-foreground/60")}>
             {title}
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-mono text-2xl font-bold text-foreground tabular-nums">
+            <span className={cn("text-2xl font-semibold text-foreground tabular-nums", !isClassic && "font-mono font-bold")}>
               {displayValue !== null ? displayValue : value}
             </span>
             {unit && (
-              <span className="font-mono text-sm text-foreground/50">{unit}</span>
+              <span className={cn("text-sm text-muted-foreground", !isClassic && "font-mono text-foreground/50")}>{unit}</span>
             )}
           </div>
           {trend && (
-            <div className={cn("mt-1 flex items-center gap-1 font-mono text-xs", trendColor[trend])}>
+            <div className={cn("mt-1 flex items-center gap-1 text-xs", !isClassic && "font-mono", trendColor[trend])}>
               <span>{trendIcon[trend]}</span>
               {trendValue && <span>{trendValue}</span>}
             </div>
@@ -123,11 +130,15 @@ export function StatCard({
         )}
       </div>
 
-      {/* Corner decorations */}
-      <div className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-primary/50" />
-      <div className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-primary/50" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 border-primary/50" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 border-primary/50" />
+      {/* Corner decorations (cyber only) */}
+      {!isClassic && (
+        <>
+          <div className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-primary/50" />
+          <div className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-primary/50" />
+          <div className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 border-primary/50" />
+          <div className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 border-primary/50" />
+        </>
+      )}
     </div>
   )
 }

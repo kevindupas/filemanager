@@ -2,25 +2,28 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 interface DataFieldProps {
   label: string
   value: string
   highlight?: boolean
+  classic?: boolean
 }
 
-function DataField({ label, value, highlight = false }: DataFieldProps) {
+function DataField({ label, value, highlight = false, classic = false }: DataFieldProps) {
   return (
     <div className="space-y-1">
-      <div className="text-[10px] uppercase tracking-widest text-foreground/80">
+      <div className={cn("text-xs text-muted-foreground", !classic && "text-[10px] uppercase tracking-widest text-foreground/80")}>
         {label}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-primary">|</span>
+        {!classic && <span className="text-primary">|</span>}
         <span
           className={cn(
-            "font-mono text-sm uppercase tracking-wide",
-            highlight && "bg-primary/20 px-2 py-0.5"
+            "text-sm",
+            !classic && "font-mono uppercase tracking-wide",
+            highlight && (classic ? "rounded bg-muted px-2 py-0.5 font-medium" : "bg-primary/20 px-2 py-0.5")
           )}
         >
           {value}
@@ -45,6 +48,8 @@ export function DataCard({
   className,
   ...props
 }: DataCardProps) {
+  const { isClassic } = useThemeMode()
+
   const statusColors = {
     active: "border-primary/50",
     inactive: "border-muted",
@@ -56,27 +61,31 @@ export function DataCard({
       data-slot="tron-data-card"
       data-status={status}
       className={cn(
-        "relative overflow-hidden rounded border bg-card/80 backdrop-blur-sm",
-        statusColors[status],
+        "relative overflow-hidden",
+        isClassic
+          ? cn("rounded-xl border bg-card shadow-sm", status === "alert" ? "border-destructive/50" : "border-border")
+          : cn("rounded border bg-card/80 backdrop-blur-sm", statusColors[status]),
         className
       )}
       {...props}
     >
-      {/* Scanline overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+      {/* Scanline overlay (cyber only) */}
+      {!isClassic && (
+        <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+      )}
 
       {/* Header */}
       {(title || subtitle) && (
         <div className="border-b border-border/50 px-4 py-2">
           {subtitle && (
-            <div className="text-[10px] uppercase tracking-widest text-foreground/80">
+            <div className={cn("text-xs text-muted-foreground", !isClassic && "text-[10px] uppercase tracking-widest text-foreground/80")}>
               {subtitle}
             </div>
           )}
           {title && (
             <div className="flex items-center gap-2">
-              <span className="text-primary">|</span>
-              <h3 className="text-lg font-bold uppercase tracking-wider">
+              {!isClassic && <span className="text-primary">|</span>}
+              <h3 className={cn("text-lg font-semibold", !isClassic && "font-bold uppercase tracking-wider")}>
                 {title}
               </h3>
             </div>
@@ -92,15 +101,20 @@ export function DataCard({
             label={field.label}
             value={field.value}
             highlight={field.highlight}
+            classic={isClassic}
           />
         ))}
       </div>
 
-      {/* Corner decorations */}
-      <div className="pointer-events-none absolute left-0 top-0 h-4 w-4 border-l-2 border-t-2 border-primary/50" />
-      <div className="pointer-events-none absolute right-0 top-0 h-4 w-4 border-r-2 border-t-2 border-primary/50" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-primary/50" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-primary/50" />
+      {/* Corner decorations (cyber only) */}
+      {!isClassic && (
+        <>
+          <div className="pointer-events-none absolute left-0 top-0 h-4 w-4 border-l-2 border-t-2 border-primary/50" />
+          <div className="pointer-events-none absolute right-0 top-0 h-4 w-4 border-r-2 border-t-2 border-primary/50" />
+          <div className="pointer-events-none absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-primary/50" />
+          <div className="pointer-events-none absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-primary/50" />
+        </>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 interface DiagnosticMetric {
   label: string
@@ -59,6 +60,7 @@ export function DiagnosticsPanel({
   className,
   ...props
 }: DiagnosticsPanelProps) {
+  const { isClassic } = useThemeMode()
   const avgValue = metrics.length
     ? Math.round(metrics.reduce((sum, m) => sum + m.value, 0) / metrics.length)
     : 0
@@ -87,40 +89,45 @@ export function DiagnosticsPanel({
       data-slot="tron-diagnostics-panel"
       data-status={status}
       className={cn(
-        "relative overflow-hidden rounded border border-primary/30 bg-card/80 backdrop-blur-sm",
+        "relative overflow-hidden",
+        isClassic
+          ? "rounded-xl border border-border bg-card shadow-sm"
+          : "rounded border border-primary/30 bg-card/80 backdrop-blur-sm",
         className
       )}
       {...props}
     >
-      {/* Scanline overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
-
-      {/* Horizontal scan sweep */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
-          style={{ animation: "diagnosticScan 4s ease-in-out infinite" }}
-        />
-      </div>
-
-      <style>{`
-        @keyframes diagnosticScan {
-          0%, 100% { top: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          50% { top: 100%; }
-        }
-      `}</style>
+      {/* Scanline overlay + scan sweep (cyber only) */}
+      {!isClassic && (
+        <>
+          <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div
+              className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+              style={{ animation: "diagnosticScan 4s ease-in-out infinite" }}
+            />
+          </div>
+          <style>{`
+            @keyframes diagnosticScan {
+              0%, 100% { top: 0%; opacity: 0; }
+              10% { opacity: 1; }
+              90% { opacity: 1; }
+              50% { top: 100%; }
+            }
+          `}</style>
+        </>
+      )}
 
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2">
         <div className={cn("h-2 w-2 rounded-full animate-pulse", statusDot[status])} />
-        <span className="text-[10px] uppercase tracking-widest text-foreground/80">
+        <span className={cn("text-xs text-muted-foreground", !isClassic && "text-[10px] uppercase tracking-widest text-foreground/80")}>
           {title}
         </span>
         <span
           className={cn(
-            "ml-auto font-mono text-[10px] uppercase tracking-widest",
+            "ml-auto text-xs",
+            !isClassic && "font-mono text-[10px] uppercase tracking-widest",
             statusLabel[status]
           )}
         >
@@ -137,16 +144,17 @@ export function DiagnosticsPanel({
           return (
             <div key={i} className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-widest text-foreground/80">
+                <span className={cn("text-xs text-muted-foreground", !isClassic && "text-[10px] uppercase tracking-widest text-foreground/80")}>
                   {metric.label}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-foreground/90">
+                  <span className={cn("text-xs text-foreground/90", !isClassic && "font-mono")}>
                     {Math.round(clamped)}%
                   </span>
                   <span
                     className={cn(
-                      "text-[9px] uppercase tracking-widest",
+                      "uppercase tracking-widest",
+                      isClassic ? "text-[10px]" : "text-[9px]",
                       metricStatusColor[mStatus],
                       mStatus === "critical" && "animate-pulse"
                     )}
@@ -160,7 +168,7 @@ export function DiagnosticsPanel({
                   className={cn(
                     "h-full rounded-full transition-all duration-700 ease-out",
                     metricBarColor[mStatus],
-                    isFilled && metricBarGlow[mStatus]
+                    !isClassic && isFilled && metricBarGlow[mStatus]
                   )}
                   style={{ width: isFilled ? `${clamped}%` : "0%" }}
                 />
@@ -173,20 +181,24 @@ export function DiagnosticsPanel({
       {/* Summary bar */}
       <div className="border-t border-border/50 px-4 py-2">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] uppercase tracking-widest text-foreground/60">
+          <span className={cn("text-xs text-muted-foreground", !isClassic && "text-[10px] uppercase tracking-widest text-foreground/60")}>
             AVG LOAD
           </span>
-          <span className="font-mono text-xs text-foreground/80">
+          <span className={cn("text-xs text-foreground/80", !isClassic && "font-mono")}>
             {avgValue}%
           </span>
         </div>
       </div>
 
-      {/* Corner decorations */}
-      <div className="pointer-events-none absolute left-0 top-0 h-4 w-4 border-l-2 border-t-2 border-primary/50" />
-      <div className="pointer-events-none absolute right-0 top-0 h-4 w-4 border-r-2 border-t-2 border-primary/50" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-primary/50" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-primary/50" />
+      {/* Corner decorations (cyber only) */}
+      {!isClassic && (
+        <>
+          <div className="pointer-events-none absolute left-0 top-0 h-4 w-4 border-l-2 border-t-2 border-primary/50" />
+          <div className="pointer-events-none absolute right-0 top-0 h-4 w-4 border-r-2 border-t-2 border-primary/50" />
+          <div className="pointer-events-none absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-primary/50" />
+          <div className="pointer-events-none absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-primary/50" />
+        </>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 export interface GridScanOverlayProps extends React.HTMLAttributes<HTMLDivElement> {
   gridSize?: number
@@ -14,6 +15,8 @@ export function GridScanOverlay({
   className,
   ...props
 }: GridScanOverlayProps) {
+  const { isClassic } = useThemeMode()
+  if (isClassic) return null // pure sci-fi decoration
   return (
     <div
       className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}

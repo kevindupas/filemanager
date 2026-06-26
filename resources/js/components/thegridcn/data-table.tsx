@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 interface DataTableColumn<T> {
   key: keyof T & string
@@ -26,6 +27,7 @@ export function DataTable<T extends Record<string, unknown>>({
   className,
   ...props
 }: DataTableProps<T>) {
+  const { isClassic } = useThemeMode()
   const [sortKey, setSortKey] = React.useState<string | null>(null)
   const [sortDir, setSortDir] = React.useState<"asc" | "desc">("asc")
 
@@ -68,15 +70,23 @@ export function DataTable<T extends Record<string, unknown>>({
     <div
       data-slot="tron-data-table"
       className={cn(
-        "relative overflow-hidden rounded border border-primary/30 bg-card/80 backdrop-blur-sm",
+        "relative overflow-hidden",
+        isClassic
+          ? "rounded-xl border border-border bg-card shadow-sm"
+          : "rounded border border-primary/30 bg-card/80 backdrop-blur-sm",
         className
       )}
       {...props}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+      {!isClassic && (
+        <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+      )}
 
       {label && (
-        <div className="border-b border-primary/20 px-4 py-2 text-[10px] uppercase tracking-widest text-foreground/50">
+        <div className={cn(
+          "border-b px-4 py-2 text-xs text-muted-foreground",
+          isClassic ? "border-border font-medium" : "border-primary/20 text-[10px] uppercase tracking-widest text-foreground/50"
+        )}>
           {label}
         </div>
       )}
@@ -89,16 +99,19 @@ export function DataTable<T extends Record<string, unknown>>({
                 <th
                   key={col.key}
                   className={cn(
-                    "border-b border-primary/20 bg-card/95 px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-foreground/40 backdrop-blur-sm",
+                    "border-b px-4 py-2.5 backdrop-blur-sm",
+                    isClassic
+                      ? "border-border bg-muted/40 text-xs font-medium text-muted-foreground"
+                      : "border-primary/20 bg-card/95 font-mono text-[10px] uppercase tracking-widest text-foreground/40",
                     alignClass(col.align),
-                    col.sortable && "cursor-pointer select-none hover:text-primary transition-colors"
+                    col.sortable && "cursor-pointer select-none transition-colors hover:text-foreground"
                   )}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                 >
                   <span className="inline-flex items-center gap-1">
                     {col.label}
                     {col.sortable && sortKey === col.key && (
-                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="text-primary">
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={isClassic ? "text-foreground" : "text-primary"}>
                         {sortDir === "asc" ? (
                           <path d="M4 1l3 5H1l3-5z" fill="currentColor" />
                         ) : (
@@ -119,14 +132,15 @@ export function DataTable<T extends Record<string, unknown>>({
                   "transition-all duration-200",
                   ri <= revealedRow ? "opacity-100" : "translate-y-1 opacity-0",
                   striped && ri % 2 === 1 && "bg-foreground/[0.02]",
-                  "hover:bg-primary/5"
+                  isClassic ? "hover:bg-muted/50" : "hover:bg-primary/5"
                 )}
               >
                 {columns.map((col) => (
                   <td
                     key={col.key}
                     className={cn(
-                      "border-b border-primary/10 px-4 py-2.5 font-mono text-xs text-foreground/70",
+                      "border-b px-4 py-2.5 text-xs",
+                      isClassic ? "border-border text-foreground/80" : "border-primary/10 font-mono text-foreground/70",
                       alignClass(col.align)
                     )}
                   >
@@ -141,10 +155,14 @@ export function DataTable<T extends Record<string, unknown>>({
         </table>
       </div>
 
-      <div className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-primary/50" />
-      <div className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-primary/50" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 border-primary/50" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 border-primary/50" />
+      {!isClassic && (
+        <>
+          <div className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-primary/50" />
+          <div className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-primary/50" />
+          <div className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 border-primary/50" />
+          <div className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 border-primary/50" />
+        </>
+      )}
     </div>
   )
 }

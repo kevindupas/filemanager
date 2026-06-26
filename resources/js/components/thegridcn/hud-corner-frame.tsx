@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 export interface HUDCornerFrameProps extends React.HTMLAttributes<HTMLDivElement> {
   position: "top-left" | "top-right" | "bottom-left" | "bottom-right"
@@ -14,6 +15,8 @@ export function HUDCornerFrame({
   className,
   ...props
 }: HUDCornerFrameProps) {
+  const { isClassic } = useThemeMode()
+  if (isClassic) return null // HUD bracket — cyber only
   const positionClasses = {
     "top-left": "top-0 left-0",
     "top-right": "top-0 right-0",

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 interface CommandMenuItem {
   label: string
@@ -30,6 +31,7 @@ export function CommandMenu({
   className,
   ...props
 }: CommandMenuProps) {
+  const { isClassic } = useThemeMode()
   const [internalOpen, setInternalOpen] = React.useState(false)
   const open = controlledOpen ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
@@ -117,22 +119,30 @@ export function CommandMenu({
       <div
         data-slot="tron-command-menu"
         className={cn(
-          "fixed left-1/2 top-[20%] z-50 w-full max-w-md -translate-x-1/2 overflow-hidden rounded border border-primary/40 bg-card/95 shadow-[0_0_40px_rgba(var(--primary-rgb,0,180,255),0.08)] backdrop-blur-md",
+          "fixed left-1/2 top-[20%] z-50 w-full max-w-md -translate-x-1/2 overflow-hidden",
+          isClassic
+            ? "rounded-xl border border-border bg-popover text-popover-foreground shadow-lg"
+            : "rounded border border-primary/40 bg-card/95 shadow-[0_0_40px_rgba(var(--primary-rgb,0,180,255),0.08)] backdrop-blur-md",
           className
         )}
         {...props}
       >
-        {/* Scanline */}
-        <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+        {/* Scanline (cyber only) */}
+        {!isClassic && (
+          <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+        )}
 
         {label && (
-          <div className="border-b border-primary/20 px-4 py-2 text-[9px] uppercase tracking-widest text-foreground/30">
+          <div className={cn(
+            "border-b px-4 py-2 text-xs text-muted-foreground",
+            isClassic ? "border-border" : "border-primary/20 text-[9px] uppercase tracking-widest text-foreground/30"
+          )}>
             {label}
           </div>
         )}
 
         {/* Search input */}
-        <div className="relative border-b border-primary/20">
+        <div className={cn("relative border-b", isClassic ? "border-border" : "border-primary/20")}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/30">
             <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" />
             <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -144,7 +154,10 @@ export function CommandMenu({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full bg-transparent py-3 pl-10 pr-4 font-mono text-sm text-foreground outline-none placeholder:text-foreground/25"
+            className={cn(
+              "w-full bg-transparent py-3 pl-10 pr-4 text-sm text-foreground outline-none placeholder:text-muted-foreground",
+              !isClassic && "font-mono placeholder:text-foreground/25"
+            )}
           />
         </div>
 
@@ -153,7 +166,10 @@ export function CommandMenu({
           {groups.map(([group, groupItems]) => (
             <div key={group}>
               {group && (
-                <div className="px-4 pb-1 pt-2 text-[9px] uppercase tracking-widest text-foreground/25">
+                <div className={cn(
+                  "px-4 pb-1 pt-2 text-muted-foreground",
+                  isClassic ? "text-[11px] font-medium" : "text-[9px] uppercase tracking-widest text-foreground/25"
+                )}>
                   {group}
                 </div>
               )}
@@ -167,8 +183,8 @@ export function CommandMenu({
                     className={cn(
                       "flex w-full items-center gap-3 px-4 py-2 text-left transition-colors",
                       idx === activeIdx
-                        ? "bg-primary/10 text-primary"
-                        : "text-foreground/70 hover:bg-primary/5"
+                        ? (isClassic ? "bg-accent text-accent-foreground" : "bg-primary/10 text-primary")
+                        : (isClassic ? "text-foreground hover:bg-accent/50" : "text-foreground/70 hover:bg-primary/5")
                     )}
                     onClick={() => { item.onSelect?.(); setOpen(false) }}
                     onMouseEnter={() => setActiveIdx(idx)}
@@ -179,13 +195,16 @@ export function CommandMenu({
                       </span>
                     )}
                     <div className="flex-1">
-                      <div className="font-mono text-xs">{item.label}</div>
+                      <div className={cn("text-sm", !isClassic && "font-mono text-xs")}>{item.label}</div>
                       {item.description && (
-                        <div className="text-[10px] text-foreground/30">{item.description}</div>
+                        <div className={cn("text-muted-foreground", isClassic ? "text-xs" : "text-[10px] text-foreground/30")}>{item.description}</div>
                       )}
                     </div>
                     {item.shortcut && (
-                      <kbd className="rounded border border-primary/20 bg-primary/5 px-1.5 py-0.5 font-mono text-[9px] text-foreground/30">
+                      <kbd className={cn(
+                        "rounded px-1.5 py-0.5 text-[9px]",
+                        isClassic ? "border border-border bg-muted font-medium text-muted-foreground" : "border border-primary/20 bg-primary/5 font-mono text-foreground/30"
+                      )}>
                         {item.shortcut}
                       </kbd>
                     )}
@@ -195,30 +214,33 @@ export function CommandMenu({
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="py-6 text-center font-mono text-[10px] uppercase tracking-widest text-foreground/25">
+            <div className={cn(
+              "py-6 text-center text-muted-foreground",
+              isClassic ? "text-sm" : "font-mono text-[10px] uppercase tracking-widest text-foreground/25"
+            )}>
               No results found
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 border-t border-primary/20 px-4 py-2">
-          <span className="font-mono text-[8px] text-foreground/20">
-            <kbd className="rounded border border-primary/15 bg-primary/5 px-1 py-0.5">↑↓</kbd> navigate
-          </span>
-          <span className="font-mono text-[8px] text-foreground/20">
-            <kbd className="rounded border border-primary/15 bg-primary/5 px-1 py-0.5">↵</kbd> select
-          </span>
-          <span className="font-mono text-[8px] text-foreground/20">
-            <kbd className="rounded border border-primary/15 bg-primary/5 px-1 py-0.5">esc</kbd> close
-          </span>
+        <div className={cn("flex items-center gap-3 border-t px-4 py-2", isClassic ? "border-border" : "border-primary/20")}>
+          {([["↑↓", "navigate"], ["↵", "select"], ["esc", "close"]] as const).map(([k, lbl]) => (
+            <span key={lbl} className={cn(isClassic ? "text-[10px] text-muted-foreground" : "font-mono text-[8px] text-foreground/20")}>
+              <kbd className={cn("rounded px-1 py-0.5", isClassic ? "border border-border bg-muted" : "border border-primary/15 bg-primary/5")}>{k}</kbd> {lbl}
+            </span>
+          ))}
         </div>
 
-        {/* Corner decorations */}
-        <div className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-primary/50" />
-        <div className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-primary/50" />
-        <div className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 border-primary/50" />
-        <div className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 border-primary/50" />
+        {/* Corner decorations (cyber only) */}
+        {!isClassic && (
+          <>
+            <div className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-primary/50" />
+            <div className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-primary/50" />
+            <div className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 border-primary/50" />
+            <div className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 border-primary/50" />
+          </>
+        )}
       </div>
     </>
   )

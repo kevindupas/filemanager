@@ -1,7 +1,7 @@
 import { DecodeText } from '@/components/cyber/decode-text';
 import { StatusBar } from '@/components/thegridcn/status-bar';
 import { useCyberActive, useCyberPref } from '@/hooks/use-cyber';
-import { GRID_THEME_LABELS, useGridTheme } from '@/hooks/use-grid-theme';
+import { themeLabel, useGridTheme } from '@/hooks/use-grid-theme';
 import { Power, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -28,7 +28,7 @@ export function SystemStatusBar() {
             leftContent={
                 <>
                     <DecodeText text="SYS://FILEMANAGER" className="text-primary" />
-                    <span className="hidden sm:inline">Theme: <span className="text-primary">{GRID_THEME_LABELS[theme]}</span></span>
+                    <span className="hidden sm:inline">Theme: <span className="text-primary">{themeLabel(theme)}</span></span>
                 </>
             }
             rightContent={

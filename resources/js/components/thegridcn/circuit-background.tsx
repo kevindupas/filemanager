@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useThemeMode } from "@/hooks/use-grid-theme"
 
 interface CircuitBackgroundProps extends React.HTMLAttributes<HTMLDivElement> {
   animated?: boolean
@@ -15,6 +16,8 @@ export function CircuitBackground({
   opacity = 0.15,
   ...props
 }: CircuitBackgroundProps) {
+  const { isClassic } = useThemeMode()
+  if (isClassic) return children ? <>{children}</> : null // circuit deco — cyber only
   return (
     <div className={cn("relative overflow-hidden", className)} {...props}>
       {/* Circuit SVG pattern */}
