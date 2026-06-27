@@ -12,6 +12,7 @@ use App\Http\Controllers\PublicShareController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\TrashController;
+use App\Http\Controllers\UserShareController;
 use App\Services\DiskResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -111,6 +112,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('shares/for', [ShareController::class, 'forPath'])->name('shares.for');
         Route::post('shares', [ShareController::class, 'store'])->name('shares.store');
         Route::delete('shares/{share}', [ShareController::class, 'destroy'])->name('shares.destroy');
+
+        // Account-to-account shares (internal). Owner-side management.
+        Route::get('shares/users', [UserShareController::class, 'forPath'])->name('shares.users.for');
+        Route::post('shares/users', [UserShareController::class, 'store'])->name('shares.users.store');
+        Route::delete('shares/users/{grant}', [UserShareController::class, 'destroy'])->name('shares.users.destroy');
     });
 
     // Activity feed — open to any authenticated user (scoped to themselves);

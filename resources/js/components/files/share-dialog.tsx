@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getXsrfToken } from '@/lib/csrf';
 import { type FileEntry } from '@/types';
-import { Check, Copy, KeyRound, Link2, Loader2, Trash2 } from 'lucide-react';
+import { Check, Copy, KeyRound, Link2, Loader2, Trash2, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Share {
@@ -21,6 +21,13 @@ interface Share {
     expires_at: string | null;
     expired: boolean;
     downloads: number;
+}
+
+interface UserGrant {
+    id: number;
+    grantee: string;
+    email: string;
+    permission: 'read' | 'write';
 }
 
 const jsonHeaders = () => ({
@@ -37,17 +44,58 @@ export function ShareDialog({ target, onClose }: { target: FileEntry | null; onC
     const [password, setPassword] = useState('');
     const [copied, setCopied] = useState<number | null>(null);
 
+    // Account-to-account sharing
+    const [grants, setGrants] = useState<UserGrant[]>([]);
+    const [email, setEmail] = useState('');
+    const [perm, setPerm] = useState<'read' | 'write'>('read');
+    const [sharing, setSharing] = useState(false);
+    const [shareError, setShareError] = useState<string | null>(null);
+
     useEffect(() => {
         setShares([]);
+        setGrants([]);
         setExpiry('0');
         setPassword('');
+        setEmail('');
+        setPerm('read');
+        setShareError(null);
         if (!target) return;
         setLoading(true);
-        fetch(route('shares.for', { path: target.path }), { headers: { Accept: 'application/json' } })
-            .then((r) => r.json())
-            .then(setShares)
+        Promise.all([
+            fetch(route('shares.for', { path: target.path }), { headers: { Accept: 'application/json' } }).then((r) => r.json()),
+            fetch(route('shares.users.for', { path: target.path }), { headers: { Accept: 'application/json' } }).then((r) => r.json()),
+        ])
+            .then(([links, userGrants]) => {
+                setShares(links);
+                setGrants(userGrants);
+            })
             .finally(() => setLoading(false));
     }, [target]);
+
+    const shareWithUser = async () => {
+        if (!target || !email) return;
+        setSharing(true);
+        setShareError(null);
+        const res = await fetch(route('shares.users.store'), {
+            method: 'POST',
+            headers: jsonHeaders(),
+            body: JSON.stringify({ path: target.path, email, permission: perm }),
+        });
+        setSharing(false);
+        if (res.ok) {
+            const grant = await res.json();
+            setGrants((prev) => [grant, ...prev.filter((g) => g.email !== grant.email)]);
+            setEmail('');
+        } else {
+            const body = await res.json().catch(() => ({}));
+            setShareError(body.message ?? 'Could not share with that account.');
+        }
+    };
+
+    const revokeGrant = async (id: number) => {
+        await fetch(route('shares.users.destroy', id), { method: 'DELETE', headers: jsonHeaders() });
+        setGrants((prev) => prev.filter((g) => g.id !== id));
+    };
 
     const create = async () => {
         if (!target) return;
@@ -157,6 +205,59 @@ export function ShareDialog({ target, onClose }: { target: FileEntry | null; onC
                                 </div>
                             </div>
                         ))
+                    )}
+                </div>
+
+                {/* Account-to-account sharing */}
+                <div className="space-y-3 border-t border-border pt-4">
+                    <Label className="text-xs uppercase tracking-widest text-muted-foreground">Share with an account</Label>
+                    <div className="flex items-end gap-2">
+                        <div className="grid flex-1 gap-1.5">
+                            <Input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="person@example.com"
+                                className="h-9"
+                            />
+                        </div>
+                        <Select value={perm} onValueChange={(v) => setPerm(v as 'read' | 'write')}>
+                            <SelectTrigger className="h-9 w-28">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="read">Can view</SelectItem>
+                                <SelectItem value="write">Can edit</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Button onClick={shareWithUser} disabled={sharing || !email} size="icon" className="size-9 shrink-0">
+                            {sharing ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
+                        </Button>
+                    </div>
+                    {shareError && <p className="text-sm text-destructive">{shareError}</p>}
+
+                    {grants.length > 0 && (
+                        <div className="space-y-1.5">
+                            {grants.map((g) => (
+                                <div key={g.id} className="flex items-center gap-2 rounded-md border border-border p-2 text-sm">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate font-medium">{g.grantee}</div>
+                                        <div className="truncate text-xs text-muted-foreground">{g.email}</div>
+                                    </div>
+                                    <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                        {g.permission === 'write' ? 'Can edit' : 'Can view'}
+                                    </span>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-8 shrink-0 text-destructive hover:text-destructive"
+                                        onClick={() => revokeGrant(g.id)}
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
             </DialogContent>
