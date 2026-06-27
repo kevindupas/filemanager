@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FavoriteController;
@@ -131,6 +132,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('shared/{grant}/upload', [SharedController::class, 'upload'])->name('shared.upload');
     Route::post('shared/{grant}/rename', [SharedController::class, 'rename'])->name('shared.rename');
     Route::delete('shared/{grant}', [SharedController::class, 'destroy'])->name('shared.destroy');
+
+    // Per-file comments (owner + grantees of the path).
+    Route::get('comments', [CommentController::class, 'index'])->name('comments.index');
+    Route::post('comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
     // Activity feed — open to any authenticated user (scoped to themselves);
     // admins can widen to everyone via ?scope=all.
