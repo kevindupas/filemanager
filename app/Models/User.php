@@ -53,7 +53,7 @@ class User extends Authenticatable
 
     /**
      * Effective storage limit in bytes. A per-user override wins (0 = unlimited);
-     * otherwise the global default from config('filemanager.quota_gb').
+     * otherwise the instance default.
      */
     public function effectiveQuotaBytes(): int
     {
@@ -61,6 +61,19 @@ class User extends Authenticatable
             return (int) $this->quota_bytes;
         }
 
-        return (int) round((float) config('filemanager.quota_gb') * 1024 ** 3);
+        return static::defaultQuotaBytes();
+    }
+
+    /**
+     * Instance-wide default quota in bytes: the install-wizard / admin setting
+     * if present, else the config fallback (filemanager.quota_gb).
+     */
+    public static function defaultQuotaBytes(): int
+    {
+        $setting = Setting::get('default_quota_bytes');
+
+        return $setting !== null
+            ? (int) $setting
+            : (int) round((float) config('filemanager.quota_gb') * 1024 ** 3);
     }
 }
