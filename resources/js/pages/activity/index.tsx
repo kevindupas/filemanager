@@ -1,9 +1,10 @@
 import { DataTable } from '@/components/thegridcn/data-table';
 import { GridPanel } from '@/components/grid-panel';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 
 interface ActivityEntry extends Record<string, unknown> {
     id: number;
@@ -25,13 +26,44 @@ const EVENT_TONE: Record<string, string> = {
     'emptied-trash': 'text-destructive',
 };
 
-export default function ActivityPage({ activities }: { activities: ActivityEntry[] }) {
+export default function ActivityPage({
+    activities,
+    canViewAll = false,
+    scope = 'mine',
+}: {
+    activities: ActivityEntry[];
+    canViewAll?: boolean;
+    scope?: 'mine' | 'all';
+}) {
+    const setScope = (next: 'mine' | 'all') =>
+        router.get('/activity', next === 'all' ? { scope: 'all' } : {}, { preserveState: true, preserveScroll: true });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Activity" />
 
             <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
-                <h1 className="shrink-0 font-mono text-lg uppercase tracking-widest text-primary glow-text">Audit log</h1>
+                <div className="flex shrink-0 items-center justify-between">
+                    <h1 className="font-mono text-lg uppercase tracking-widest text-primary glow-text">Activity</h1>
+                    {canViewAll && (
+                        <div className="inline-flex gap-1 rounded-lg border border-border bg-muted/40 p-1">
+                            <Button
+                                size="sm"
+                                variant={scope === 'mine' ? 'secondary' : 'ghost'}
+                                onClick={() => setScope('mine')}
+                            >
+                                Mine
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant={scope === 'all' ? 'secondary' : 'ghost'}
+                                onClick={() => setScope('all')}
+                            >
+                                Everyone
+                            </Button>
+                        </div>
+                    )}
+                </div>
 
                 {activities.length === 0 ? (
                     <GridPanel label="AUDIT LOG">
