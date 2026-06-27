@@ -21,32 +21,58 @@ interface NavEntry {
     url: string;
     icon: LucideIcon;
     external?: boolean; // non-Inertia (Pulse)
+    show?: boolean; // permission gate (defaults to visible)
+}
+
+interface NavGroup {
+    label: string;
+    items: NavEntry[];
 }
 
 export function AppSidebar() {
     const { can, isAdmin } = usePermissions();
     const page = usePage();
 
-    const nav: NavEntry[] = [
-        { title: 'Dashboard', url: '/dashboard', icon: LayoutGrid },
-        { title: 'Files', url: '/files', icon: HardDrive },
-        { title: 'Favorites', url: '/favorites', icon: Star },
-        { title: 'Notes', url: '/notes', icon: NotebookPen },
-        { title: 'Connections', url: '/connections', icon: Server },
-        { title: 'Commander', url: '/commander', icon: Columns2 },
-    ];
-    if (can('delete-files')) nav.push({ title: 'Trash', url: '/trash', icon: Trash2 });
-    if (can('share-files')) nav.push({ title: 'Shares', url: '/shares', icon: Share2 });
-    if (can('manage-users')) {
-        nav.push({ title: 'Users', url: '/admin/users', icon: Users });
-        nav.push({ title: 'Activity', url: '/activity', icon: ScrollText });
-    }
+    const groups: NavGroup[] = [
+        {
+            label: 'Overview',
+            items: [{ title: 'Dashboard', url: '/dashboard', icon: LayoutGrid }],
+        },
+        {
+            label: 'Files',
+            items: [
+                { title: 'Files', url: '/files', icon: HardDrive },
+                { title: 'Commander', url: '/commander', icon: Columns2 },
+                { title: 'Favorites', url: '/favorites', icon: Star },
+                { title: 'Shares', url: '/shares', icon: Share2, show: can('share-files') },
+                { title: 'Trash', url: '/trash', icon: Trash2, show: can('delete-files') },
+            ],
+        },
+        {
+            label: 'Workspace',
+            items: [
+                { title: 'Notes', url: '/notes', icon: NotebookPen },
+                { title: 'Connections', url: '/connections', icon: Server },
+            ],
+        },
+        {
+            label: 'Admin',
+            items: [
+                { title: 'Users', url: '/admin/users', icon: Users, show: can('manage-users') },
+                { title: 'Activity', url: '/activity', icon: ScrollText, show: can('manage-users') },
+                { title: 'Pulse', url: '/pulse', icon: Activity, external: true, show: isAdmin },
+            ],
+        },
+    ]
+        // drop gated-out items, then drop any group left empty
+        .map((g) => ({ ...g, items: g.items.filter((i) => i.show !== false) }))
+        .filter((g) => g.items.length > 0);
 
     const isActive = (url: string) => page.url === url || page.url.startsWith(url + '/') || page.url.startsWith(url + '?');
 
     const renderItem = (item: NavEntry, index: number) => {
         const active = item.external ? page.url.startsWith(item.url) : isActive(item.url);
-        const num = String(index + 1).padStart(2, '0');
+        const num = String(index).padStart(2, '0');
         const inner = (
             <>
                 <span className="text-[10px] tabular-nums text-primary/40 group-data-[collapsible=icon]:hidden">{num}</span>
@@ -105,23 +131,17 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-widest text-foreground/40">
-                        Navigation:&nbsp;<span className="text-primary/60">00.sys</span>
-                    </SidebarGroupLabel>
-                    <SidebarMenu>{nav.map(renderItem)}</SidebarMenu>
-                </SidebarGroup>
-
-                {isAdmin && (
-                    <SidebarGroup className="px-2 py-0">
-                        <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-widest text-foreground/40">
-                            Monitoring
-                        </SidebarGroupLabel>
-                        <SidebarMenu>
-                            {renderItem({ title: 'Pulse', url: '/pulse', icon: Activity, external: true }, nav.length)}
-                        </SidebarMenu>
-                    </SidebarGroup>
-                )}
+                {(() => {
+                    let counter = 0; // continuous HUD numbering across all groups
+                    return groups.map((group) => (
+                        <SidebarGroup key={group.label} className="px-2 py-0">
+                            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-widest text-foreground/40">
+                                {group.label}
+                            </SidebarGroupLabel>
+                            <SidebarMenu>{group.items.map((item) => renderItem(item, ++counter))}</SidebarMenu>
+                        </SidebarGroup>
+                    ));
+                })()}
             </SidebarContent>
 
             <SidebarFooter>
