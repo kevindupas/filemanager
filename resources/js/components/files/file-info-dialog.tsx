@@ -1,9 +1,17 @@
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useActiveDisk } from '@/hooks/use-active-disk';
+import { getXsrfToken } from '@/lib/csrf';
 import { formatBytes, formatDate } from '@/lib/format';
 import { type FileEntry } from '@/types';
-import { Loader2 } from 'lucide-react';
+import { Download, History, Loader2, RotateCcw } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+interface Version {
+    id: number;
+    size: number;
+    created_at: string | null;
+}
 
 interface FileInfo {
     name: string;
@@ -38,8 +46,19 @@ export function FileInfoDialog({ target, onClose }: { target: FileEntry | null; 
     const [info, setInfo] = useState<FileInfo | null>(null);
     const [loading, setLoading] = useState(false);
 
+    const [versions, setVersions] = useState<Version[]>([]);
+
+    const loadVersions = () => {
+        if (!target || target.type === 'dir') return;
+        fetch(route('files.versions', { path: target.path, ...params }), { headers: { Accept: 'application/json' } })
+            .then((r) => r.json())
+            .then((d) => setVersions(Array.isArray(d) ? d : []))
+            .catch(() => setVersions([]));
+    };
+
     useEffect(() => {
         setInfo(null);
+        setVersions([]);
         if (!target) return;
         setLoading(true);
         fetch(route('files.info', { path: target.path, ...params }), { headers: { Accept: 'application/json' } })
@@ -47,7 +66,18 @@ export function FileInfoDialog({ target, onClose }: { target: FileEntry | null; 
             .then(setInfo)
             .catch(() => setInfo(null))
             .finally(() => setLoading(false));
-    }, [target]);
+        loadVersions();
+    }, [target]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const restoreVersion = async (id: number) => {
+        if (!target) return;
+        const res = await fetch(route('files.versions.restore'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': getXsrfToken() },
+            body: JSON.stringify({ path: target.path, version: id, ...params }),
+        });
+        if (res.ok) loadVersions();
+    };
 
     const rows: Array<[string, React.ReactNode]> = [];
     if (info) {
@@ -116,6 +146,28 @@ export function FileInfoDialog({ target, onClose }: { target: FileEntry | null; 
                                 <code className="block break-all rounded-md border border-border bg-background/60 p-2 text-xs">
                                     {info.sha256}
                                 </code>
+                            </div>
+                        )}
+
+                        {versions.length > 0 && (
+                            <div>
+                                <p className="mb-1 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                                    <History className="size-3.5" /> Versions
+                                </p>
+                                <ul className="divide-y divide-border/40 rounded-lg border border-border">
+                                    {versions.map((v) => (
+                                        <li key={v.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+                                            <span className="flex-1 text-muted-foreground">{v.created_at}</span>
+                                            <span className="w-20 text-right text-xs text-muted-foreground">{formatBytes(v.size)}</span>
+                                            <a href={route('files.versions.download', { path: target!.path, version: v.id, ...params })}>
+                                                <Button variant="ghost" size="icon" className="size-8"><Download className="size-4" /></Button>
+                                            </a>
+                                            <Button variant="ghost" size="icon" className="size-8" title="Restore this version" onClick={() => restoreVersion(v.id)}>
+                                                <RotateCcw className="size-4" />
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         )}
                     </div>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -19,7 +20,7 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
 
-    Route::get('settings/two-factor', function (\Illuminate\Http\Request $request) {
+    Route::get('settings/two-factor', function (Request $request) {
         $user = $request->user();
 
         return Inertia::render('settings/two-factor', [

@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ProcessTransfer;
 use App\Models\Favorite;
+use App\Models\FileVersion;
 use App\Models\Transfer;
 use App\Services\DiskResolver;
 use App\Services\FileManager;
 use App\Services\TrashManager;
+use App\Services\VersionManager;
 use App\Support\Audit;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +34,7 @@ class FileController extends Controller
         private readonly FileManager $files,
         private readonly TrashManager $trash,
         private readonly DiskResolver $disks,
+        private readonly VersionManager $versions,
     ) {}
 
     /**
@@ -195,10 +198,71 @@ class FileController extends Controller
         }
         $this->files->absolutePath($path); // assert under root
 
+        if ($this->files->isLocal()) {
+            $this->versions->snapshot($disk, $request->user()->id, $path);
+        }
         $disk->put($path, $data['content']);
         Audit::log('edited', "Edited “{$path}”", ['path' => $path]);
 
         return response()->json(['ok' => true]);
+    }
+
+    /** Version history for a file (local disk only). */
+    public function versions(Request $request): JsonResponse
+    {
+        $disk = $this->activeDisk($request);
+        if (! $disk['isLocal']) {
+            return response()->json([]);
+        }
+        $path = $this->files->normalize($request->query('path'));
+
+        return response()->json(
+            $this->versions->list($request->user()->id, $path)->map(fn (FileVersion $v) => [
+                'id' => $v->id,
+                'size' => $v->size,
+                'created_at' => $v->created_at?->toDateTimeString(),
+            ])
+        );
+    }
+
+    /** Restore a previous version (current bytes are snapshotted first). */
+    public function restoreVersion(Request $request): JsonResponse
+    {
+        $this->activeDisk($request);
+        $data = $request->validate(['path' => ['required', 'string'], 'version' => ['required', 'integer']]);
+        $path = $this->files->normalize($data['path']);
+
+        $version = FileVersion::where('id', $data['version'])
+            ->where('owner_id', $request->user()->id)
+            ->where('path', $path)
+            ->firstOr(fn () => throw new HttpException(404, 'Version not found.'));
+
+        $this->versions->restore($this->files->disk(), $request->user()->id, $version);
+        Audit::log('restored-version', "Restored a previous version of “{$path}”", ['path' => $path]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** Download the bytes of a specific version. */
+    public function downloadVersion(Request $request): StreamedResponse
+    {
+        $this->activeDisk($request);
+        $version = FileVersion::where('id', (int) $request->query('version'))
+            ->where('owner_id', $request->user()->id)
+            ->firstOr(fn () => throw new HttpException(404, 'Version not found.'));
+
+        $disk = $this->files->disk();
+        $key = $this->versions->storagePath($version);
+        $name = basename($version->path);
+
+        return response()->streamDownload(function () use ($disk, $key) {
+            $stream = $disk->readStream($key);
+            while (! feof($stream)) {
+                echo fread($stream, 8192);
+                flush();
+            }
+            fclose($stream);
+        }, $name, ['Content-Length' => (string) $disk->size($key)]);
     }
 
     /**
@@ -543,6 +607,10 @@ class FileController extends Controller
 
         // Confirm the destination directory resolves under the root.
         $this->files->absolutePath($target, mustExist: false);
+
+        if ($local && $this->files->disk()->exists($target)) {
+            $this->versions->snapshot($this->files->disk(), $request->user()->id, $target);
+        }
 
         $stream = fopen($file->getPathname(), 'rb');
         $this->files->disk()->writeStream($target, $stream);

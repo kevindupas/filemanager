@@ -7,6 +7,7 @@ use App\Services\FileManager;
 use App\Services\SharedAccess;
 use App\Services\TrashManager;
 use App\Services\UserStorage;
+use App\Services\VersionManager;
 use App\Support\Audit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -28,6 +29,7 @@ class SharedController extends Controller
         private readonly SharedAccess $shared,
         private readonly UserStorage $storage,
         private readonly TrashManager $trash,
+        private readonly VersionManager $versions,
     ) {}
 
     /** "Shared with me" — grants addressed to the current user. */
@@ -121,6 +123,10 @@ class SharedController extends Controller
 
         $name = basename($this->files->normalize($file->getClientOriginalName())) ?: 'upload';
         $target = $this->confined($grant, ($dir === '' ? '' : $dir.'/').$name);
+
+        if ($this->files->disk()->exists($target)) {
+            $this->versions->snapshot($this->files->disk(), $grant->owner_id, $target);
+        }
 
         $stream = fopen($file->getPathname(), 'rb');
         $this->files->disk()->writeStream($target, $stream);
