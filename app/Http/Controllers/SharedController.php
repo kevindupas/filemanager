@@ -40,6 +40,7 @@ class SharedController extends Controller
             ->map(fn (FileGrant $g) => [
                 'id' => $g->id,
                 'owner' => $g->owner?->name,
+                'owner_id' => $g->owner_id,
                 'path' => $g->path,
                 'name' => basename($g->path) ?: $g->path,
                 'permission' => $g->permission,
