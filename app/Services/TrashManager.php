@@ -97,6 +97,25 @@ class TrashManager
     }
 
     /**
+     * Purge trashed items older than $days across all users (retention policy).
+     * $days <= 0 keeps everything.
+     */
+    public function purgeExpired(int $days): int
+    {
+        if ($days <= 0) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach (TrashedItem::where('created_at', '<', now()->subDays($days))->get() as $item) {
+            $this->purge($item);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
      * Empty the bin for a single user (never touches other users' trash).
      */
     public function emptyAll(int $userId): int

@@ -80,6 +80,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('files/save', [FileController::class, 'save'])
         ->middleware('permission:upload-files')->name('files.save');
 
+    // File version history (local disk).
+    Route::get('files/versions', [FileController::class, 'versions'])->name('files.versions');
+    Route::get('files/versions/download', [FileController::class, 'downloadVersion'])->name('files.versions.download');
+    Route::post('files/versions/restore', [FileController::class, 'restoreVersion'])
+        ->middleware('permission:upload-files')->name('files.versions.restore');
+
     // Encrypted notes — per user, body encrypted at rest.
     Route::get('notes', [NoteController::class, 'index'])->name('notes.index');
     Route::post('notes', [NoteController::class, 'store'])->name('notes.store');
