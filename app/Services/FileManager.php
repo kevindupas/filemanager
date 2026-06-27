@@ -18,6 +18,8 @@ class FileManager
 
     private bool $isLocal = true;
 
+    public function __construct(private readonly UserStorage $storage) {}
+
     /** Point the manager at a resolved disk (defaults to local). */
     public function useDisk(Filesystem $disk, bool $isLocal): void
     {
@@ -30,9 +32,14 @@ class FileManager
         return $this->isLocal;
     }
 
+    /**
+     * The active disk, or — when none was set explicitly — the authenticated
+     * user's private partition. Never falls back to a shared root, so a missing
+     * user context throws rather than leaking everyone's files.
+     */
     public function disk(): Filesystem
     {
-        return $this->active ?? Storage::disk('local');
+        return $this->active ?? $this->storage->local((int) auth()->id());
     }
 
     /** lastModified that tolerates adapters which can't report it (SFTP dirs, S3). */
