@@ -26,6 +26,11 @@ const sidebarNavItems: NavItem[] = [
         url: '/settings/two-factor',
         icon: null,
     },
+    {
+        title: 'API tokens',
+        url: '/settings/tokens',
+        icon: null,
+    },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
