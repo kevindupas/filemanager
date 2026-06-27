@@ -15,6 +15,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class DiskResolver
 {
+    public function __construct(private readonly UserStorage $storage) {}
+
     /**
      * @return array{key: string, label: string, type: string, isLocal: bool, filesystem: Filesystem}
      */
@@ -26,7 +28,7 @@ class DiskResolver
                 'label' => 'Local',
                 'type' => 'local',
                 'isLocal' => true,
-                'filesystem' => Storage::disk('local'),
+                'filesystem' => $this->storage->local($user->id),
             ];
         }
 

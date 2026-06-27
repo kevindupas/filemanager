@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -38,6 +39,19 @@ class FileManagerTest extends TestCase
         return $user;
     }
 
+    /**
+     * The given user's private partition — a subdirectory of the (faked) local
+     * disk, matching how UserStorage confines each account in production.
+     */
+    private function userDisk(User $user): Filesystem
+    {
+        return Storage::build([
+            'driver' => 'local',
+            'root' => Storage::disk('local')->path('users/'.$user->id),
+            'throw' => false,
+        ]);
+    }
+
     public function test_guests_are_redirected_from_the_browser(): void
     {
         $this->get('/files')->assertRedirect('/login');
@@ -45,9 +59,10 @@ class FileManagerTest extends TestCase
 
     public function test_any_authenticated_user_can_browse(): void
     {
-        Storage::disk('local')->makeDirectory('Documents');
+        $user = $this->makeUser();
+        $this->userDisk($user)->makeDirectory('Documents');
 
-        $this->actingAs($this->makeUser())->get('/files')->assertOk();
+        $this->actingAs($user)->get('/files')->assertOk();
     }
 
     public function test_path_traversal_is_confined_to_the_root(): void
@@ -68,47 +83,54 @@ class FileManagerTest extends TestCase
 
     public function test_folder_creation_requires_permission(): void
     {
-        $this->actingAs($this->makeUser())
+        $user = $this->makeUser();
+
+        $this->actingAs($user)
             ->post('/files/folders', ['name' => 'NewDir', 'path' => ''])
             ->assertForbidden();
 
-        Storage::disk('local')->assertMissing('NewDir');
+        $this->userDisk($user)->assertMissing('NewDir');
     }
 
     public function test_folder_creation_works_with_permission(): void
     {
-        $this->actingAs($this->makeUser('admin'))
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
             ->post('/files/folders', ['name' => 'NewDir', 'path' => '']);
 
-        Storage::disk('local')->assertExists('NewDir');
+        $this->userDisk($admin)->assertExists('NewDir');
     }
 
     public function test_deletion_requires_permission(): void
     {
-        Storage::disk('local')->put('keep.txt', 'data');
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('keep.txt', 'data');
 
-        $this->actingAs($this->makeUser())
+        $this->actingAs($user)
             ->delete('/files', ['path' => 'keep.txt'])
             ->assertForbidden();
 
-        Storage::disk('local')->assertExists('keep.txt');
+        $this->userDisk($user)->assertExists('keep.txt');
     }
 
     public function test_deletion_works_with_permission(): void
     {
-        Storage::disk('local')->put('gone.txt', 'data');
+        $admin = $this->makeUser('admin');
+        $this->userDisk($admin)->put('gone.txt', 'data');
 
-        $this->actingAs($this->makeUser('admin'))
+        $this->actingAs($admin)
             ->delete('/files', ['path' => 'gone.txt']);
 
-        Storage::disk('local')->assertMissing('gone.txt');
+        $this->userDisk($admin)->assertMissing('gone.txt');
     }
 
     public function test_download_streams_to_any_authenticated_user(): void
     {
-        Storage::disk('local')->put('hello.txt', 'hello world');
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('hello.txt', 'hello world');
 
-        $response = $this->actingAs($this->makeUser())->get('/files/download?path=hello.txt');
+        $response = $this->actingAs($user)->get('/files/download?path=hello.txt');
 
         $response->assertOk();
         $response->assertDownload('hello.txt');
@@ -116,9 +138,11 @@ class FileManagerTest extends TestCase
 
     public function test_dotfiles_are_hidden_from_the_listing(): void
     {
-        Storage::disk('local')->put('.gitignore', '*');
-        Storage::disk('local')->put('visible.txt', 'hi');
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('.gitignore', '*');
+        $this->userDisk($user)->put('visible.txt', 'hi');
 
+        $this->actingAs($user);
         $listing = app(\App\Services\FileManager::class)->list('');
         $names = array_column($listing['entries'], 'name');
 
@@ -128,9 +152,10 @@ class FileManagerTest extends TestCase
 
     public function test_preview_streams_a_file_inline(): void
     {
-        Storage::disk('local')->put('photo.txt', 'inline-bytes');
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('photo.txt', 'inline-bytes');
 
-        $response = $this->actingAs($this->makeUser())->get('/files/preview?path=photo.txt');
+        $response = $this->actingAs($user)->get('/files/preview?path=photo.txt');
 
         $response->assertOk();
         $this->assertStringContainsString('inline', $response->headers->get('Content-Disposition'));
@@ -138,9 +163,10 @@ class FileManagerTest extends TestCase
 
     public function test_info_returns_file_metadata(): void
     {
-        Storage::disk('local')->put('doc.txt', 'metadata please');
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('doc.txt', 'metadata please');
 
-        $this->actingAs($this->makeUser())
+        $this->actingAs($user)
             ->getJson('/files/info?path=doc.txt')
             ->assertOk()
             ->assertJson([
@@ -155,10 +181,11 @@ class FileManagerTest extends TestCase
 
     public function test_info_returns_folder_counts(): void
     {
-        Storage::disk('local')->put('proj/a.txt', 'a');
-        Storage::disk('local')->put('proj/sub/b.txt', 'bb');
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('proj/a.txt', 'a');
+        $this->userDisk($user)->put('proj/sub/b.txt', 'bb');
 
-        $this->actingAs($this->makeUser())
+        $this->actingAs($user)
             ->getJson('/files/info?path=proj')
             ->assertOk()
             ->assertJson(['type' => 'dir', 'fileCount' => 2, 'folderCount' => 1, 'size' => 3]);
@@ -166,11 +193,12 @@ class FileManagerTest extends TestCase
 
     public function test_move_relocates_a_file(): void
     {
-        $disk = Storage::disk('local');
+        $user = $this->makeUser();
+        $disk = $this->userDisk($user);
         $disk->put('a.txt', 'x');
         $disk->makeDirectory('dest');
 
-        $this->actingAs($this->makeUser())
+        $this->actingAs($user)
             ->post('/files/move', ['paths' => ['a.txt'], 'destination' => 'dest']);
 
         $disk->assertMissing('a.txt');
@@ -179,12 +207,13 @@ class FileManagerTest extends TestCase
 
     public function test_copy_suffixes_on_collision(): void
     {
-        $disk = Storage::disk('local');
+        $user = $this->makeUser();
+        $disk = $this->userDisk($user);
         $disk->put('note.txt', 'one');
         $disk->makeDirectory('dest');
         $disk->put('dest/note.txt', 'existing');
 
-        $this->actingAs($this->makeUser())
+        $this->actingAs($user)
             ->post('/files/copy', ['paths' => ['note.txt'], 'destination' => 'dest']);
 
         $disk->assertExists('dest/note.txt');       // untouched
@@ -194,10 +223,11 @@ class FileManagerTest extends TestCase
 
     public function test_cannot_move_folder_into_its_descendant(): void
     {
-        $disk = Storage::disk('local');
+        $user = $this->makeUser();
+        $disk = $this->userDisk($user);
         $disk->makeDirectory('parent/child');
 
-        $this->actingAs($this->makeUser())
+        $this->actingAs($user)
             ->post('/files/move', ['paths' => ['parent'], 'destination' => 'parent/child']);
 
         // Guard kept the folder where it was.
@@ -207,10 +237,12 @@ class FileManagerTest extends TestCase
 
     public function test_recursive_search_finds_nested_matches(): void
     {
-        $disk = Storage::disk('local');
+        $user = $this->makeUser();
+        $disk = $this->userDisk($user);
         $disk->put('top/deep/report-2026.txt', 'x');
         $disk->put('top/other.txt', 'x');
 
+        $this->actingAs($user);
         $listing = app(\App\Services\FileManager::class)->search('', 'report');
         $names = array_column($listing['entries'], 'name');
 
@@ -220,11 +252,12 @@ class FileManagerTest extends TestCase
 
     public function test_bulk_delete_removes_multiple(): void
     {
-        $disk = Storage::disk('local');
+        $admin = $this->makeUser('admin');
+        $disk = $this->userDisk($admin);
         $disk->put('one.txt', 'a');
         $disk->put('two.txt', 'b');
 
-        $this->actingAs($this->makeUser('admin'))
+        $this->actingAs($admin)
             ->delete('/files', ['paths' => ['one.txt', 'two.txt']]);
 
         $disk->assertMissing('one.txt');
@@ -233,11 +266,12 @@ class FileManagerTest extends TestCase
 
     public function test_dirs_returns_only_subdirectories(): void
     {
-        $disk = Storage::disk('local');
+        $user = $this->makeUser();
+        $disk = $this->userDisk($user);
         $disk->makeDirectory('folderA');
         $disk->put('loose.txt', 'x');
 
-        $this->actingAs($this->makeUser())
+        $this->actingAs($user)
             ->getJson('/files/dirs?path=')
             ->assertOk()
             ->assertJsonFragment(['name' => 'folderA'])
@@ -248,16 +282,17 @@ class FileManagerTest extends TestCase
 
     public function test_delete_moves_to_trash_and_can_be_restored(): void
     {
-        $disk = Storage::disk('local');
+        $admin = $this->makeUser('admin');
+        $disk = $this->userDisk($admin);
         $disk->put('keep.txt', 'data');
 
-        $this->actingAs($this->makeUser('admin'))->delete('/files', ['paths' => ['keep.txt']]);
+        $this->actingAs($admin)->delete('/files', ['paths' => ['keep.txt']]);
 
         $disk->assertMissing('keep.txt');
         $this->assertDatabaseCount('trashed_items', 1);
 
         $item = \App\Models\TrashedItem::first();
-        $this->actingAs($this->makeUser('admin'))->post("/trash/{$item->id}/restore");
+        $this->actingAs($admin)->post("/trash/{$item->id}/restore");
 
         $disk->assertExists('keep.txt');
         $this->assertDatabaseCount('trashed_items', 0);
@@ -265,8 +300,8 @@ class FileManagerTest extends TestCase
 
     public function test_purge_permanently_removes_a_trashed_item(): void
     {
-        Storage::disk('local')->put('bye.txt', 'x');
         $admin = $this->makeUser('admin');
+        $this->userDisk($admin)->put('bye.txt', 'x');
 
         $this->actingAs($admin)->delete('/files', ['paths' => ['bye.txt']]);
         $item = \App\Models\TrashedItem::first();
@@ -285,13 +320,17 @@ class FileManagerTest extends TestCase
 
     public function test_share_creation_requires_share_files_permission(): void
     {
-        Storage::disk('local')->put('doc.pdf', 'x');
+        $user = $this->makeUser('user');
+        $this->userDisk($user)->put('doc.pdf', 'x');
 
-        $this->actingAs($this->makeUser('user'))
+        $this->actingAs($user)
             ->postJson('/shares', ['path' => 'doc.pdf'])
             ->assertForbidden();
 
-        $this->actingAs($this->makeUser('admin'))
+        $admin = $this->makeUser('admin');
+        $this->userDisk($admin)->put('doc.pdf', 'x');
+
+        $this->actingAs($admin)
             ->postJson('/shares', ['path' => 'doc.pdf'])
             ->assertCreated()
             ->assertJsonStructure(['id', 'url', 'has_password']);
@@ -299,26 +338,32 @@ class FileManagerTest extends TestCase
 
     public function test_cannot_share_a_directory(): void
     {
-        Storage::disk('local')->makeDirectory('folder');
+        $admin = $this->makeUser('admin');
+        $this->userDisk($admin)->makeDirectory('folder');
 
-        $this->actingAs($this->makeUser('admin'))
+        $this->actingAs($admin)
             ->postJson('/shares', ['path' => 'folder'])
             ->assertStatus(422);
     }
 
     public function test_public_can_download_a_shared_file(): void
     {
-        Storage::disk('local')->put('pub.txt', 'public bytes');
-        $share = \App\Models\FileShare::create(['token' => 'tok123', 'path' => 'pub.txt', 'name' => 'pub.txt']);
+        $owner = $this->makeUser('admin');
+        $this->userDisk($owner)->put('pub.txt', 'public bytes');
+        $share = \App\Models\FileShare::create([
+            'token' => 'tok123', 'path' => 'pub.txt', 'name' => 'pub.txt', 'created_by' => $owner->id,
+        ]);
 
         $this->get("/s/{$share->token}/download")->assertOk()->assertDownload('pub.txt');
     }
 
     public function test_expired_share_is_blocked(): void
     {
-        Storage::disk('local')->put('old.txt', 'x');
+        $owner = $this->makeUser('admin');
+        $this->userDisk($owner)->put('old.txt', 'x');
         $share = \App\Models\FileShare::create([
-            'token' => 'expiredtok', 'path' => 'old.txt', 'name' => 'old.txt', 'expires_at' => now()->subDay(),
+            'token' => 'expiredtok', 'path' => 'old.txt', 'name' => 'old.txt',
+            'created_by' => $owner->id, 'expires_at' => now()->subDay(),
         ]);
 
         $this->get("/s/{$share->token}/download")->assertStatus(410);
@@ -326,9 +371,10 @@ class FileManagerTest extends TestCase
 
     public function test_password_protected_share_blocks_without_unlock(): void
     {
-        Storage::disk('local')->put('secret.txt', 'x');
+        $owner = $this->makeUser('admin');
+        $this->userDisk($owner)->put('secret.txt', 'x');
         $share = \App\Models\FileShare::create([
-            'token' => 'pwtok', 'path' => 'secret.txt', 'name' => 'secret.txt',
+            'token' => 'pwtok', 'path' => 'secret.txt', 'name' => 'secret.txt', 'created_by' => $owner->id,
             'password' => \Illuminate\Support\Facades\Hash::make('hunter2'),
         ]);
 
@@ -339,11 +385,12 @@ class FileManagerTest extends TestCase
 
     public function test_zip_streams_selected_paths(): void
     {
-        $disk = Storage::disk('local');
+        $user = $this->makeUser();
+        $disk = $this->userDisk($user);
         $disk->put('a.txt', 'aaa');
         $disk->put('folder/b.txt', 'bbb');
 
-        $response = $this->actingAs($this->makeUser())
+        $response = $this->actingAs($user)
             ->get('/files/zip?'.http_build_query(['paths' => ['a.txt', 'folder']]));
 
         $response->assertOk();
@@ -352,20 +399,22 @@ class FileManagerTest extends TestCase
 
     public function test_thumbnail_returns_404_for_non_images(): void
     {
-        Storage::disk('local')->put('notes.txt', 'x');
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('notes.txt', 'x');
 
-        $this->actingAs($this->makeUser())->get('/files/thumb?path=notes.txt')->assertStatus(404);
+        $this->actingAs($user)->get('/files/thumb?path=notes.txt')->assertStatus(404);
     }
 
     public function test_thumbnail_is_generated_for_an_image(): void
     {
+        $user = $this->makeUser();
         $gd = imagecreatetruecolor(20, 20);
         ob_start();
         imagejpeg($gd);
-        Storage::disk('local')->put('pic.jpg', ob_get_clean());
+        $this->userDisk($user)->put('pic.jpg', ob_get_clean());
         imagedestroy($gd);
 
-        $response = $this->actingAs($this->makeUser())->get('/files/thumb?path=pic.jpg');
+        $response = $this->actingAs($user)->get('/files/thumb?path=pic.jpg');
 
         $response->assertOk();
         $this->assertSame('image/jpeg', $response->headers->get('Content-Type'));
@@ -389,8 +438,8 @@ class FileManagerTest extends TestCase
 
     public function test_favorite_toggle_adds_then_removes(): void
     {
-        Storage::disk('local')->put('star.txt', 'x');
         $user = $this->makeUser();
+        $this->userDisk($user)->put('star.txt', 'x');
 
         $this->actingAs($user)->postJson('/favorites/toggle', ['path' => 'star.txt'])
             ->assertOk()->assertJson(['favorited' => true]);
@@ -408,7 +457,9 @@ class FileManagerTest extends TestCase
 
     public function test_quota_detects_overage(): void
     {
-        Storage::disk('local')->put('a.bin', str_repeat('x', 2000));
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('a.bin', str_repeat('x', 2000));
+        $this->actingAs($user);
         $fm = app(\App\Services\FileManager::class);
 
         config(['filemanager.quota_gb' => 2500 / 1024 ** 3]); // 2500 bytes
@@ -418,9 +469,11 @@ class FileManagerTest extends TestCase
 
     public function test_quota_zero_means_unlimited(): void
     {
-        Storage::disk('local')->put('a.bin', str_repeat('x', 2000));
+        $user = $this->makeUser();
+        $this->userDisk($user)->put('a.bin', str_repeat('x', 2000));
         config(['filemanager.quota_gb' => 0]);
 
+        $this->actingAs($user);
         $this->assertFalse(app(\App\Services\FileManager::class)->exceedsQuota(PHP_INT_MAX - 1));
     }
 
@@ -473,23 +526,25 @@ class FileManagerTest extends TestCase
 
     public function test_save_writes_edited_text(): void
     {
-        Storage::disk('local')->put('note.txt', 'old');
+        $admin = $this->makeUser('admin');
+        $this->userDisk($admin)->put('note.txt', 'old');
 
-        $this->actingAs($this->makeUser('admin'))
+        $this->actingAs($admin)
             ->post('/files/save', ['path' => 'note.txt', 'content' => 'edited content'])
             ->assertOk();
 
-        $this->assertSame('edited content', Storage::disk('local')->get('note.txt'));
+        $this->assertSame('edited content', $this->userDisk($admin)->get('note.txt'));
     }
 
     public function test_save_requires_upload_permission(): void
     {
-        Storage::disk('local')->put('note.txt', 'old');
+        $user = $this->makeUser('user'); // no upload-files permission
+        $this->userDisk($user)->put('note.txt', 'old');
 
-        $this->actingAs($this->makeUser('user')) // no upload-files permission
+        $this->actingAs($user)
             ->post('/files/save', ['path' => 'note.txt', 'content' => 'x'])
             ->assertForbidden();
 
-        $this->assertSame('old', Storage::disk('local')->get('note.txt'));
+        $this->assertSame('old', $this->userDisk($user)->get('note.txt'));
     }
 }

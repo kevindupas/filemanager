@@ -21,11 +21,15 @@ class ShareController extends Controller
 {
     public function __construct(private readonly FileManager $files) {}
 
-    /** Management page listing every share. */
-    public function index(): Response
+    /** Management page listing the current user's own shares. */
+    public function index(Request $request): Response
     {
         return Inertia::render('shares/index', [
-            'shares' => FileShare::with('creator')->latest()->get()->map($this->present(...)),
+            'shares' => FileShare::with('creator')
+                ->where('created_by', $request->user()->id)
+                ->latest()
+                ->get()
+                ->map($this->present(...)),
         ]);
     }
 
@@ -35,7 +39,11 @@ class ShareController extends Controller
         $path = $this->files->normalize($request->query('path'));
 
         return response()->json(
-            FileShare::where('path', $path)->latest()->get()->map($this->present(...))
+            FileShare::where('path', $path)
+                ->where('created_by', $request->user()->id)
+                ->latest()
+                ->get()
+                ->map($this->present(...))
         );
     }
 
@@ -69,8 +77,10 @@ class ShareController extends Controller
         return response()->json($this->present($share), 201);
     }
 
-    public function destroy(FileShare $share): JsonResponse
+    public function destroy(Request $request, FileShare $share): JsonResponse
     {
+        abort_unless($share->created_by === $request->user()->id, 403);
+
         Audit::log('unshared', "Revoked share link for “{$share->name}”");
         $share->delete();
 

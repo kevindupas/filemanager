@@ -434,7 +434,8 @@ class FileController extends Controller
         }
 
         $thumbs = Storage::disk('thumbs');
-        $key = sha1($resolved['key'].'|'.$path).'-'.$disk->lastModified($path).'.jpg';
+        // Namespace by user so two accounts with the same path can't share a thumb.
+        $key = sha1($request->user()->id.'|'.$resolved['key'].'|'.$path).'-'.$disk->lastModified($path).'.jpg';
 
         if (! $thumbs->exists($key)) {
             // Decode from the file's bytes so it works on any disk (local or remote).

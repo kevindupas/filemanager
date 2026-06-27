@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FileShare;
 use App\Services\FileManager;
+use App\Services\UserStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -18,7 +19,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class PublicShareController extends Controller
 {
-    public function __construct(private readonly FileManager $files) {}
+    public function __construct(
+        private readonly FileManager $files,
+        private readonly UserStorage $storage,
+    ) {}
 
     public function show(Request $request, string $token): Response
     {
@@ -36,7 +40,7 @@ class PublicShareController extends Controller
             ]);
         }
 
-        if (! $this->files->disk()->exists($this->safePath($share))) {
+        if (! $this->bindCreatorDisk($share) || ! $this->files->disk()->exists($this->safePath($share))) {
             return Inertia::render('shares/public', ['state' => 'gone']);
         }
 
@@ -123,11 +127,27 @@ class PublicShareController extends Controller
         if ($share->hasPassword() && ! $this->unlocked($request, $share)) {
             throw new HttpException(403, 'Password required.');
         }
-        if (! $this->files->disk()->exists($this->safePath($share))) {
+        if (! $this->bindCreatorDisk($share) || ! $this->files->disk()->exists($this->safePath($share))) {
             throw new HttpException(404, 'File no longer exists.');
         }
 
         return $share;
+    }
+
+    /**
+     * Point the FileManager at the share creator's private partition so the
+     * file resolves from the owner's storage, never the visitor's. Returns
+     * false for an orphaned share (creator deleted).
+     */
+    private function bindCreatorDisk(FileShare $share): bool
+    {
+        if ($share->created_by === null) {
+            return false;
+        }
+
+        $this->files->useDisk($this->storage->local($share->created_by), true);
+
+        return true;
     }
 
     /** Re-normalise the stored path and confirm it stays under the root. */
