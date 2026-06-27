@@ -126,6 +126,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('shared/{grant}/info', [SharedController::class, 'info'])->name('shared.info');
     Route::get('shared/{grant}/download', [SharedController::class, 'download'])->name('shared.download');
     Route::get('shared/{grant}/preview', [SharedController::class, 'preview'])->name('shared.preview');
+    // Writes — only honoured for write grants (checked in the controller).
+    Route::post('shared/{grant}/folders', [SharedController::class, 'storeFolder'])->name('shared.folders');
+    Route::post('shared/{grant}/upload', [SharedController::class, 'upload'])->name('shared.upload');
+    Route::post('shared/{grant}/rename', [SharedController::class, 'rename'])->name('shared.rename');
+    Route::delete('shared/{grant}', [SharedController::class, 'destroy'])->name('shared.destroy');
 
     // Activity feed — open to any authenticated user (scoped to themselves);
     // admins can widen to everyone via ?scope=all.
