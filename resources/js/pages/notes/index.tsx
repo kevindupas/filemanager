@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getXsrfToken } from '@/lib/csrf';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Lock, Pin, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, Lock, Pin, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 interface Note {
@@ -102,8 +103,12 @@ export default function Notes({ notes: initial }: { notes: Note[] }) {
                 </div>
 
                 <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[22rem_1fr]">
-                    {/* List */}
-                    <GridPanel label="NOTES" className="flex min-h-0 flex-col" bodyClassName="flex min-h-0 flex-1 flex-col">
+                    {/* List — hidden on mobile while a note is open (master-detail) */}
+                    <GridPanel
+                        label="NOTES"
+                        className={cn('min-h-0 flex-col', selected ? 'hidden lg:flex' : 'flex')}
+                        bodyClassName="flex min-h-0 flex-1 flex-col"
+                    >
                         <div className="shrink-0 border-b border-primary/15 p-2">
                             <div className="relative">
                                 <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -137,10 +142,10 @@ export default function Notes({ notes: initial }: { notes: Note[] }) {
                         </div>
                     </GridPanel>
 
-                    {/* Editor */}
+                    {/* Editor — full screen on mobile while a note is open */}
                     <GridPanel
                         label={selected ? titleOf(selected.body) : 'EDITOR'}
-                        className="flex min-h-0 flex-col"
+                        className={cn('min-h-0 flex-col', selected ? 'flex' : 'hidden lg:flex')}
                         bodyClassName="flex min-h-0 flex-1 flex-col"
                     >
                         {!selected ? (
@@ -150,6 +155,15 @@ export default function Notes({ notes: initial }: { notes: Note[] }) {
                         ) : (
                             <>
                                 <div className="flex shrink-0 items-center gap-2 border-b border-primary/15 px-3 py-1.5">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-7 lg:hidden"
+                                        title="Back to list"
+                                        onClick={() => setSelectedId(null)}
+                                    >
+                                        <ArrowLeft className="size-4" />
+                                    </Button>
                                     <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{saving ? 'Saving…' : 'Saved'}</span>
                                     <Button variant="ghost" size="icon" className="ml-auto size-7" title={selected.pinned ? 'Unpin' : 'Pin'} onClick={() => togglePin(selected)}>
                                         <Pin className={`size-4 ${selected.pinned ? 'text-primary' : 'text-muted-foreground'}`} />
