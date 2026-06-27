@@ -13,7 +13,7 @@ import {
 import { HUDCornerFrame } from '@/components/thegridcn/hud-corner-frame';
 import { usePermissions } from '@/hooks/use-permissions';
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, Columns2, HardDrive, LayoutGrid, type LucideIcon, NotebookPen, ScrollText, Server, Share2, Star, Trash2, Users } from 'lucide-react';
+import { Activity, Columns2, HardDrive, LayoutGrid, type LucideIcon, NotebookPen, ScrollText, Server, Share2, Star, Trash2, Users, UsersRound } from 'lucide-react';
 import AppLogo from './app-logo';
 
 interface NavEntry {
@@ -44,6 +44,7 @@ export function AppSidebar() {
                 { title: 'Files', url: '/files', icon: HardDrive },
                 { title: 'Commander', url: '/commander', icon: Columns2 },
                 { title: 'Favorites', url: '/favorites', icon: Star },
+                { title: 'Shared with me', url: '/shared', icon: UsersRound },
                 { title: 'Shares', url: '/shares', icon: Share2, show: can('share-files') },
                 { title: 'Trash', url: '/trash', icon: Trash2, show: can('delete-files') },
             ],

@@ -10,6 +10,7 @@ use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PublicShareController;
 use App\Http\Controllers\ShareController;
+use App\Http\Controllers\SharedController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\UserShareController;
@@ -118,6 +119,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('shares/users', [UserShareController::class, 'store'])->name('shares.users.store');
         Route::delete('shares/users/{grant}', [UserShareController::class, 'destroy'])->name('shares.users.destroy');
     });
+
+    // Shared with me (internal grants) — read access, confined to the grant.
+    Route::get('shared', [SharedController::class, 'index'])->name('shared.index');
+    Route::get('shared/{grant}/list', [SharedController::class, 'list'])->name('shared.list');
+    Route::get('shared/{grant}/info', [SharedController::class, 'info'])->name('shared.info');
+    Route::get('shared/{grant}/download', [SharedController::class, 'download'])->name('shared.download');
+    Route::get('shared/{grant}/preview', [SharedController::class, 'preview'])->name('shared.preview');
 
     // Activity feed — open to any authenticated user (scoped to themselves);
     // admins can widen to everyone via ?scope=all.
