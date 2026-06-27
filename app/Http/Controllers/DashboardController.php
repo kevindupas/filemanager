@@ -15,7 +15,7 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $stats = $this->files->stats();
-        $quotaBytes = (int) round(config('filemanager.quota_gb') * 1024 ** 3);
+        $quotaBytes = $request->user()->effectiveQuotaBytes();
 
         return Inertia::render('dashboard', [
             'stats' => $stats,

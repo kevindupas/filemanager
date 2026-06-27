@@ -309,10 +309,14 @@ class FileManager
         return array_sum(array_map(fn ($f) => $disk->size($f), $disk->allFiles('')));
     }
 
-    /** Configured quota in bytes (0 = unlimited). */
+    /** Effective quota in bytes for the current user (0 = unlimited). */
     public function quotaBytes(): int
     {
-        return (int) round((float) config('filemanager.quota_gb') * 1024 ** 3);
+        $user = auth()->user();
+
+        return $user
+            ? $user->effectiveQuotaBytes()
+            : (int) round((float) config('filemanager.quota_gb') * 1024 ** 3);
     }
 
     /** True if adding $incoming bytes would exceed the quota. */
