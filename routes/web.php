@@ -3,7 +3,6 @@
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ConnectionController;
-use App\Http\Controllers\TransferController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FileController;
@@ -11,7 +10,10 @@ use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PublicShareController;
 use App\Http\Controllers\ShareController;
+use App\Http\Controllers\TransferController;
 use App\Http\Controllers\TrashController;
+use App\Services\DiskResolver;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -41,9 +43,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('files/download', [FileController::class, 'download'])->name('files.download');
 
     // Dual-pane commander (cross-disk transfers via drag & drop).
-    Route::get('commander', function (\Illuminate\Http\Request $request) {
+    Route::get('commander', function (Request $request) {
         return Inertia::render('commander', [
-            'disks' => app(\App\Services\DiskResolver::class)->available($request->user()),
+            'disks' => app(DiskResolver::class)->available($request->user()),
             'can' => [
                 'delete' => $request->user()->can('delete-files'),
                 'createFolders' => $request->user()->can('create-folders'),
@@ -111,9 +113,12 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('shares/{share}', [ShareController::class, 'destroy'])->name('shares.destroy');
     });
 
+    // Activity feed — open to any authenticated user (scoped to themselves);
+    // admins can widen to everyone via ?scope=all.
+    Route::get('activity', [ActivityController::class, 'index'])->name('activity.index');
+
     // Account administration — admin only (manage-users permission).
     Route::middleware('permission:manage-users')->group(function () {
-        Route::get('activity', [ActivityController::class, 'index'])->name('activity.index');
         Route::get('admin/users', [UserController::class, 'index'])->name('admin.users.index');
         Route::post('admin/users', [UserController::class, 'store'])->name('admin.users.store');
         Route::put('admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');

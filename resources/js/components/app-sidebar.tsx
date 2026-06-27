@@ -53,13 +53,13 @@ export function AppSidebar() {
             items: [
                 { title: 'Notes', url: '/notes', icon: NotebookPen },
                 { title: 'Connections', url: '/connections', icon: Server },
+                { title: 'Activity', url: '/activity', icon: ScrollText },
             ],
         },
         {
             label: 'Admin',
             items: [
                 { title: 'Users', url: '/admin/users', icon: Users, show: can('manage-users') },
-                { title: 'Activity', url: '/activity', icon: ScrollText, show: can('manage-users') },
                 { title: 'Pulse', url: '/pulse', icon: Activity, external: true, show: isAdmin },
             ],
         },

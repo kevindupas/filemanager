@@ -428,9 +428,10 @@ class FileManagerTest extends TestCase
         $this->assertDatabaseHas('activity_log', ['event' => 'created-folder']);
     }
 
-    public function test_activity_page_requires_manage_users(): void
+    public function test_activity_page_is_open_to_any_authenticated_user(): void
     {
-        $this->actingAs($this->makeUser('user'))->get('/activity')->assertForbidden();
+        // Activity is now per-user (scoped to the caller); admins can widen it.
+        $this->actingAs($this->makeUser('user'))->get('/activity')->assertOk();
         $this->actingAs($this->makeUser('admin'))->get('/activity')->assertOk();
     }
 
