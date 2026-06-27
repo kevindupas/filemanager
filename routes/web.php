@@ -7,12 +7,18 @@ use App\Http\Controllers\TransferController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PublicShareController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\TrashController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// First-run install wizard (no auth). The EnsureInstalled middleware keeps
+// everything else redirected here until it completes, then locks it.
+Route::get('install', [InstallController::class, 'show'])->name('install.show');
+Route::post('install', [InstallController::class, 'store'])->name('install.store');
 
 // Public share access (no auth) — rate-limited.
 Route::middleware('throttle:60,1')->group(function () {

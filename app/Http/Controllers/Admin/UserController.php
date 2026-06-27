@@ -35,7 +35,7 @@ class UserController extends Controller
         return Inertia::render('admin/users', [
             'users' => $users,
             'roles' => Role::orderBy('name')->pluck('name'),
-            'defaultQuotaBytes' => (int) round((float) config('filemanager.quota_gb') * 1024 ** 3),
+            'defaultQuotaBytes' => User::defaultQuotaBytes(),
         ]);
     }
 

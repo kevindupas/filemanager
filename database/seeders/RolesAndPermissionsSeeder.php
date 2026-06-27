@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -15,6 +13,9 @@ class RolesAndPermissionsSeeder extends Seeder
      * Create the minimal role/permission model for the file manager:
      * - permissions gate the sensitive/destructive actions
      * - browse + download stay open to any authenticated user (no permission needed)
+     *
+     * No accounts are seeded: the first admin is created by the install wizard
+     * (/install), so no instance ships with hardcoded credentials.
      */
     public function run(): void
     {
@@ -34,23 +35,7 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         // admin: everything. user: no special permission (browse/download only).
-        $admin = Role::firstOrCreate(['name' => 'admin']);
-        $admin->syncPermissions($permissions);
-
+        Role::firstOrCreate(['name' => 'admin'])->syncPermissions($permissions);
         Role::firstOrCreate(['name' => 'user']);
-
-        // First admin account.
-        $adminUser = User::firstOrCreate(
-            ['email' => 'admin@admin.com'],
-            ['name' => 'Admin', 'password' => Hash::make('redacted-old-dev-password')],
-        );
-        $adminUser->assignRole('admin');
-
-        // A plain user for testing the permission boundaries.
-        $plainUser = User::firstOrCreate(
-            ['email' => 'user@filemanager.test'],
-            ['name' => 'User', 'password' => Hash::make('password')],
-        );
-        $plainUser->assignRole('user');
     }
 }
