@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Retention: purge old trashed items daily.
 Schedule::command('trash:purge')->daily();
+
+// Task reminders: fire due email reminders every minute.
+Schedule::command('tasks:remind')->everyMinute();

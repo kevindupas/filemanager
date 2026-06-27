@@ -12,6 +12,7 @@ use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PublicShareController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\SharedController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\UserShareController;
@@ -138,6 +139,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('shared/{grant}/upload', [SharedController::class, 'upload'])->name('shared.upload');
     Route::post('shared/{grant}/rename', [SharedController::class, 'rename'])->name('shared.rename');
     Route::delete('shared/{grant}', [SharedController::class, 'destroy'])->name('shared.destroy');
+
+    // Personal to-do list.
+    Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
     // Per-file comments (owner + grantees of the path).
     Route::get('comments', [CommentController::class, 'index'])->name('comments.index');

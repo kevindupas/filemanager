@@ -13,7 +13,7 @@ import {
 import { HUDCornerFrame } from '@/components/thegridcn/hud-corner-frame';
 import { usePermissions } from '@/hooks/use-permissions';
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, Columns2, HardDrive, LayoutGrid, type LucideIcon, NotebookPen, ScrollText, Server, Share2, Star, Trash2, Users, UsersRound } from 'lucide-react';
+import { Activity, Columns2, HardDrive, LayoutGrid, ListTodo, type LucideIcon, NotebookPen, ScrollText, Server, Share2, Star, Trash2, Users, UsersRound } from 'lucide-react';
 import AppLogo from './app-logo';
 
 interface NavEntry {
@@ -53,6 +53,7 @@ export function AppSidebar() {
             label: 'Workspace',
             items: [
                 { title: 'Notes', url: '/notes', icon: NotebookPen },
+                { title: 'Tasks', url: '/tasks', icon: ListTodo },
                 { title: 'Connections', url: '/connections', icon: Server },
                 { title: 'Activity', url: '/activity', icon: ScrollText },
             ],
