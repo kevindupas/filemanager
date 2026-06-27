@@ -24,16 +24,33 @@ interface AdminUser extends Record<string, unknown> {
     email: string;
     role: string | null;
     created_at: string | null;
+    quota_bytes: number | null;
 }
 
 interface UsersProps {
     users: AdminUser[];
     roles: string[];
+    defaultQuotaBytes: number;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/admin/users' }];
 
-export default function Users({ users, roles }: UsersProps) {
+const GIB = 1024 ** 3;
+
+/** bytes → GB string for a form field. null = '' (inherit), 0 = '0' (unlimited). */
+function quotaToGbField(bytes: number | null): string {
+    if (bytes === null) return '';
+    if (bytes === 0) return '0';
+    return String(Math.round((bytes / GIB) * 100) / 100);
+}
+
+function quotaLabel(bytes: number | null, defaultBytes: number): string {
+    if (bytes === null) return `Default (${Math.round((defaultBytes / GIB) * 100) / 100} GB)`;
+    if (bytes === 0) return 'Unlimited';
+    return `${Math.round((bytes / GIB) * 100) / 100} GB`;
+}
+
+export default function Users({ users, roles, defaultQuotaBytes }: UsersProps) {
     const [createOpen, setCreateOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<AdminUser | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
@@ -67,6 +84,13 @@ export default function Users({ users, roles }: UsersProps) {
                                 </Badge>
                             ),
                         },
+                        {
+                            key: 'quota_bytes',
+                            label: 'Quota',
+                            render: (_v, user) => (
+                                <span className="text-muted-foreground">{quotaLabel(user.quota_bytes, defaultQuotaBytes)}</span>
+                            ),
+                        },
                         { key: 'created_at', label: 'Created', sortable: true },
                         {
                             key: 'id',
@@ -92,8 +116,8 @@ export default function Users({ users, roles }: UsersProps) {
                 />
             </div>
 
-            <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} roles={roles} />
-            <EditUserDialog target={editTarget} roles={roles} onClose={() => setEditTarget(null)} />
+            <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} roles={roles} defaultQuotaBytes={defaultQuotaBytes} />
+            <EditUserDialog target={editTarget} roles={roles} defaultQuotaBytes={defaultQuotaBytes} onClose={() => setEditTarget(null)} />
             <DeleteUserDialog target={deleteTarget} onClose={() => setDeleteTarget(null)} />
         </AppLayout>
     );
@@ -120,16 +144,19 @@ function CreateUserDialog({
     open,
     onOpenChange,
     roles,
+    defaultQuotaBytes,
 }: {
     open: boolean;
     onOpenChange: (o: boolean) => void;
     roles: string[];
+    defaultQuotaBytes: number;
 }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
         password: '',
         role: 'user',
+        quota_gb: '',
     });
 
     const submit = (e: FormEvent) => {
@@ -163,6 +190,12 @@ function CreateUserDialog({
                     <Field label="Role" error={errors.role}>
                         <RoleSelect value={data.role} onChange={(v) => setData('role', v)} roles={roles} />
                     </Field>
+                    <QuotaField
+                        value={data.quota_gb}
+                        onChange={(v) => setData('quota_gb', v)}
+                        error={errors.quota_gb}
+                        defaultQuotaBytes={defaultQuotaBytes}
+                    />
                     <DialogFooter>
                         <Button type="submit" disabled={processing} className="glow-border">
                             Create
@@ -177,10 +210,12 @@ function CreateUserDialog({
 function EditUserDialog({
     target,
     roles,
+    defaultQuotaBytes,
     onClose,
 }: {
     target: AdminUser | null;
     roles: string[];
+    defaultQuotaBytes: number;
     onClose: () => void;
 }) {
     const { data, setData, put, processing, errors } = useForm({
@@ -188,11 +223,18 @@ function EditUserDialog({
         email: '',
         password: '',
         role: 'user',
+        quota_gb: '',
     });
 
     useEffect(() => {
         if (target) {
-            setData({ name: target.name, email: target.email, password: '', role: target.role ?? 'user' });
+            setData({
+                name: target.name,
+                email: target.email,
+                password: '',
+                role: target.role ?? 'user',
+                quota_gb: quotaToGbField(target.quota_bytes),
+            });
         }
     }, [target]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -225,6 +267,12 @@ function EditUserDialog({
                     <Field label="Role" error={errors.role}>
                         <RoleSelect value={data.role} onChange={(v) => setData('role', v)} roles={roles} />
                     </Field>
+                    <QuotaField
+                        value={data.quota_gb}
+                        onChange={(v) => setData('quota_gb', v)}
+                        error={errors.quota_gb}
+                        defaultQuotaBytes={defaultQuotaBytes}
+                    />
                     <DialogFooter>
                         <Button type="submit" disabled={processing} className="glow-border">
                             Save
@@ -270,6 +318,34 @@ function DeleteUserDialog({ target, onClose }: { target: AdminUser | null; onClo
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    );
+}
+
+function QuotaField({
+    value,
+    onChange,
+    error,
+    defaultQuotaBytes,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    error?: string;
+    defaultQuotaBytes: number;
+}) {
+    const defaultGb = Math.round((defaultQuotaBytes / GIB) * 100) / 100;
+
+    return (
+        <Field label="Quota (GB)" error={error}>
+            <Input
+                type="number"
+                min={0}
+                step="any"
+                placeholder={`Default (${defaultGb} GB)`}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Leave empty to inherit the default. Use 0 for unlimited.</p>
+        </Field>
     );
 }
 

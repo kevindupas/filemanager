@@ -24,6 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'quota_bytes',
     ];
 
     /**
@@ -46,6 +47,20 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'quota_bytes' => 'integer',
         ];
+    }
+
+    /**
+     * Effective storage limit in bytes. A per-user override wins (0 = unlimited);
+     * otherwise the global default from config('filemanager.quota_gb').
+     */
+    public function effectiveQuotaBytes(): int
+    {
+        if ($this->quota_bytes !== null) {
+            return (int) $this->quota_bytes;
+        }
+
+        return (int) round((float) config('filemanager.quota_gb') * 1024 ** 3);
     }
 }

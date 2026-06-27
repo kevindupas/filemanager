@@ -28,12 +28,28 @@ class UserController extends Controller
             'email' => $user->email,
             'role' => $user->roles->first()?->name,
             'created_at' => $user->created_at?->toDateString(),
+            // null = inherit the global default; 0 = unlimited; >0 = bytes.
+            'quota_bytes' => $user->quota_bytes,
         ]);
 
         return Inertia::render('admin/users', [
             'users' => $users,
             'roles' => Role::orderBy('name')->pluck('name'),
+            'defaultQuotaBytes' => (int) round((float) config('filemanager.quota_gb') * 1024 ** 3),
         ]);
+    }
+
+    /**
+     * Convert a GB quota field to bytes. null/'' = inherit the default;
+     * 0 = unlimited; otherwise the value in bytes.
+     */
+    private function quotaBytesFromGb(mixed $gb): ?int
+    {
+        if ($gb === null || $gb === '') {
+            return null;
+        }
+
+        return (int) round((float) $gb * 1024 ** 3);
     }
 
     public function store(Request $request): RedirectResponse
@@ -43,12 +59,14 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', Password::defaults()],
             'role' => ['required', 'string', Rule::exists('roles', 'name')],
+            'quota_gb' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'quota_bytes' => $this->quotaBytesFromGb($data['quota_gb'] ?? null),
         ]);
 
         $user->syncRoles([$data['role']]);
@@ -64,6 +82,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', Password::defaults()],
             'role' => ['required', 'string', Rule::exists('roles', 'name')],
+            'quota_gb' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         // Don't let the last admin demote themselves and lock everyone out.
@@ -74,7 +93,8 @@ class UserController extends Controller
         $user->update([
             'name' => $data['name'],
             'email' => $data['email'],
-            ...($data['password'] ? ['password' => Hash::make($data['password'])] : []),
+            'quota_bytes' => $this->quotaBytesFromGb($data['quota_gb'] ?? null),
+            ...(($data['password'] ?? null) ? ['password' => Hash::make($data['password'])] : []),
         ]);
 
         $user->syncRoles([$data['role']]);
