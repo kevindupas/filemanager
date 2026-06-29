@@ -230,7 +230,8 @@ function CommanderPane({
     const toggle = (p: string) =>
         setSelected((prev) => {
             const n = new Set(prev);
-            n.has(p) ? n.delete(p) : n.add(p);
+            if (n.has(p)) n.delete(p);
+            else n.add(p);
             return n;
         });
 

@@ -188,7 +188,8 @@ export default function Browser({ listing, search, favorites, disk, disks, can }
     const toggle = (path: string) =>
         setSelected((prev) => {
             const next = new Set(prev);
-            next.has(path) ? next.delete(path) : next.add(path);
+            if (next.has(path)) next.delete(path);
+            else next.add(path);
             return next;
         });
 
