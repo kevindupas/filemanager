@@ -61,7 +61,7 @@ export const GRID_THEME_SWATCH: Record<GridTheme, string> = {
 
 const THEME_KEY = 'grid-theme';
 const MODE_KEY = 'classic-mode';
-const DEFAULT_THEME: AppTheme = 'tron';
+const DEFAULT_THEME: AppTheme = CLASSIC_THEME;
 const DEFAULT_MODE: ClassicMode = 'system';
 
 function isAppTheme(value: unknown): value is AppTheme {
