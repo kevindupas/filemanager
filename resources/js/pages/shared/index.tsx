@@ -68,7 +68,7 @@ export default function SharedIndex({ grants }: { grants: Grant[] }) {
 
     useEffect(() => {
         if (active && active.is_dir) load(active, path);
-    }, [active, path]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [active, path]);  
 
     const openFolder = (g: Grant) => {
         setActive(g);
@@ -268,7 +268,7 @@ function CommentsDialog({ ownerId, target, onClose }: { ownerId: number; target:
             .finally(() => setLoading(false));
     };
 
-    useEffect(reload, [ownerId, target.path]); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(reload, [ownerId, target.path]);  
 
     const send = async () => {
         if (!body.trim()) return;
