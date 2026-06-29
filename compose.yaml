@@ -34,6 +34,19 @@ services:
       - redis
       - db
 
+  scheduler:
+    image: filemanager:latest
+    restart: unless-stopped
+    env_file: .env
+    # Runs due scheduled tasks every minute (task email reminders, trash retention).
+    command: ["php", "artisan", "schedule:work"]
+    volumes:
+      - storage:/app/storage/app
+    depends_on:
+      - app
+      - redis
+      - db
+
   db:
     image: postgres:16-alpine
     restart: unless-stopped
